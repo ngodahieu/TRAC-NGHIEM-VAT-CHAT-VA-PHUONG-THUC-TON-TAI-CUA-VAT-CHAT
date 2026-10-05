@@ -56,7 +56,6 @@
         <!-- KHU VỰC HIỂN THỊ BOSS -->
         <div class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden">
             <div class="absolute inset-0 bg-red-950/20 pointer-events-none"></div>
-            <!-- Ảnh hoặc Biểu tượng Boss hoành tráng -->
             <div class="boss-avatar w-24 h-24 rounded-full bg-gradient-to-tr from-red-900 via-red-600 to-orange-500 flex items-center justify-center border-4 border-red-500 shadow-2xl mb-2">
                 <span class="text-4xl">🐲</span>
             </div>
@@ -100,15 +99,20 @@
     </div>
 
     <!-- MÀN HÌNH KẾT THÚC -->
-    <div id="end-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-md text-center hidden">
+    <div id="end-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-2xl text-center hidden">
         <h2 id="end-title" class="game-font text-3xl font-black mb-2">CHIẾN THẮNG!</h2>
-        <p id="end-subtitle" class="text-gray-400 mb-6">Boss đã bị hạ gục bởi sức mạnh đồng đội!</p>
-        <div class="bg-gray-900/60 p-4 rounded-xl mb-6 text-left">
-            <div class="text-sm text-gray-400 mb-1">Thành tích cá nhân:</div>
-            <div class="flex justify-between"><span class="text-gray-300">Tổng sát thương (DPS):</span> <span id="final-dps" class="game-font font-bold text-green-400">0</span></div>
+        <p id="end-subtitle" class="text-gray-400 mb-6">Trận đại chiến đã khép lại. Dưới đây là bảng xếp hạng chung cuộc:</p>
+        
+        <!-- Bảng xếp hạng toàn bộ người chơi -->
+        <div class="bg-gray-900/80 p-4 rounded-xl mb-6 text-left max-h-64 overflow-y-auto border border-gray-800">
+            <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3">🏅 Bảng Xếp Hạng Toàn Bộ Người Chơi</h4>
+            <div id="final-leaderboard" class="space-y-2 text-sm">
+                <!-- Render bằng JS -->
+            </div>
         </div>
-        <button onclick="location.reload()" class="w-full py-3 bg-red-600 hover:bg-red-700 game-font font-bold rounded-xl transition">
-            VỀ TRANG CHỦ
+
+        <button onclick="returnHome()" class="w-full py-3 bg-red-600 hover:bg-red-700 game-font font-bold rounded-xl transition shadow-lg shadow-red-600/30">
+            VỀ TRANG CHỦ / CHƠI LẠI
         </button>
     </div>
 
@@ -131,7 +135,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Mật khẩu Admin cố định (Bạn có thể sửa lại mật khẩu tại đây)
         const ADMIN_SECRET = "admin123";
         let isAdmin = false;
 
@@ -159,21 +162,13 @@
         let myName = localStorage.getItem('boss_player_name') || '';
         let myDps = parseInt(localStorage.getItem('boss_player_dps') || '0');
         let currentQuestionIndex = 0;
-        let timerInterval;
+        let timerInterval = null;
         let timeLeft = 12;
         let answeredCurrent = false;
 
-        // Chống bấm nút Back (quay lại trang trước) của trình duyệt
-        history.pushState(null, null, location.href);
-        window.onpopstate = function () {
-            history.go(1);
-        };
-
-        // Tự động kiểm tra trạng thái game khi vừa vào hoặc reload trang
         window.onload = function() {
             if (myName) {
                 document.getElementById('player-name').value = myName;
-                // Nếu đã lưu tên trước đó, tự động kết nối lại vào phòng chờ/trận đấu
                 checkExistingSession();
             }
         };
@@ -217,26 +212,31 @@
         }
 
         function setupListeners() {
-            // Lắng nghe số lượng người chơi
             db.ref('room/players').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
                 const count = Object.keys(players).length;
                 document.getElementById('player-count').innerText = count;
             });
 
-            // Nếu là Admin, hiện nút bắt đầu
             if (isAdmin) {
                 document.getElementById('admin-start-btn').classList.remove('hidden');
                 document.getElementById('waiting-text').innerText = "Bạn là Admin, hãy bấm nút bắt đầu khi sẵn sàng!";
             }
 
-            // Lắng nghe trạng thái game từ Firebase (phục vụ đồng bộ & chống reload mất tiến trình)
             db.ref('room/gameState').on('value', (snapshot) => {
                 const state = snapshot.val();
                 if (state) {
                     if (state.status === 'playing') {
-                        currentQuestionIndex = state.questionIndex || 0;
-                        startPlayingGame();
+                        // Tránh load lại câu hỏi trùng lặp liên tục nếu index không đổi
+                        if (currentQuestionIndex !== state.questionIndex) {
+                            currentQuestionIndex = state.questionIndex || 0;
+                            loadQuestion();
+                        }
+                        // Nếu đang ở lobby mà state là playing thì ẩn lobby, hiện game
+                        if (!document.getElementById('game-screen').classList.contains('hidden') === false &&
+                            document.getElementById('lobby-screen').classList.contains('hidden') === false) {
+                            startPlayingGame();
+                        }
                     } else if (state.status === 'ended') {
                         endGame(true);
                     }
@@ -267,9 +267,13 @@
                 return;
             }
 
+            // Xóa bộ đếm cũ nếu có trước khi tạo mới
+            if (timerInterval) clearInterval(timerInterval);
+
             answeredCurrent = false;
             timeLeft = 12;
             document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
+            document.getElementById('timer').innerText = timeLeft + 's';
             
             const q = questions[currentQuestionIndex];
             document.getElementById('question-title').innerText = q.q;
@@ -285,7 +289,7 @@
                 container.appendChild(btn);
             });
 
-            clearInterval(timerInterval);
+            // Khởi chạy lại đồng hồ đếm ngược chuẩn xác
             timerInterval = setInterval(() => {
                 timeLeft--;
                 document.getElementById('timer').innerText = timeLeft + 's';
@@ -301,7 +305,7 @@
         function submitAnswer(selectedIndex, correctIndex) {
             if (answeredCurrent) return;
             answeredCurrent = true;
-            clearInterval(timerInterval);
+            if (timerInterval) clearInterval(timerInterval);
 
             const buttons = document.getElementById('answers-container').children;
             for (let i = 0; i < buttons.length; i++) {
@@ -316,7 +320,6 @@
                 localStorage.setItem('boss_player_dps', myDps);
                 document.getElementById('my-dps').innerText = myDps;
 
-                // Trừ máu Boss chung trên Firebase
                 db.ref('room/bossHP').transaction((currentHP) => {
                     if (currentHP === null) return 10000 - damage;
                     return Math.max(0, currentHP - damage);
@@ -327,12 +330,12 @@
                 handleWrongAnswer();
             }
 
-            // Chuyển câu hỏi sau 2 giây (Chỉ Admin điều phối tiến trình câu hỏi chung)
+            // Chuyển câu hỏi sau 2 giây (Chỉ Admin điều phối)
             setTimeout(() => {
-                currentQuestionIndex++;
+                let nextIdx = currentQuestionIndex + 1;
                 if (isAdmin) {
-                    if (currentQuestionIndex < questions.length) {
-                        db.ref('room/gameState').update({ questionIndex: currentQuestionIndex });
+                    if (nextIdx < questions.length) {
+                        db.ref('room/gameState').update({ questionIndex: nextIdx });
                     } else {
                         db.ref('room/gameState').update({ status: 'ended' });
                     }
@@ -357,8 +360,8 @@
                 document.getElementById('boss-hp-bar').style.width = percent + '%';
                 document.getElementById('boss-hp-text').innerText = `${hp.toLocaleString()} / 10,000 HP`;
 
-                if (hp <= 0) {
-                    endGame(true);
+                if (hp <= 0 && isAdmin) {
+                    db.ref('room/gameState').update({ status: 'ended' });
                 }
             });
         }
@@ -381,19 +384,53 @@
         }
 
         function endGame(isVictory) {
+            if (timerInterval) clearInterval(timerInterval);
             document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('end-screen').classList.remove('hidden');
-            document.getElementById('final-dps').innerText = myDps;
-            
+
             if (isVictory) {
                 document.getElementById('end-title').innerHTML = "CHIẾN THẮNG TRÙM!";
                 document.getElementById('end-title').className = "game-font text-3xl font-black mb-2 text-green-400";
-                document.getElementById('end-subtitle').innerText = "Cộng đồng đã hạ gục Hỏa Long Vương thành công!";
+                document.getElementById('end-subtitle').innerText = "Cộng đồng đã hợp sức hạ gục Hỏa Long Vương thành công!";
             } else {
-                document.getElementById('end-title').innerText = "THẤT BẠI!";
-                document.getElementById('end-title').className = "game-font text-3xl font-black mb-2 text-red-500";
-                document.getElementById('end-subtitle').innerText = "Hết thời gian nhưng Boss vẫn còn sống!";
+                document.getElementById('end-title').innerText = "TRẬN ĐẤU KẾT THÚC!";
+                document.getElementById('end-title').className = "game-font text-3xl font-black mb-2 text-yellow-400";
+                document.getElementById('end-subtitle').innerText = "Đã hoàn thành toàn bộ câu hỏi thử thách!";
             }
+
+            // Lấy toàn bộ danh sách người chơi để hiển thị bảng xếp hạng chung cuộc
+            db.ref('room/players').once('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const sorted = Object.values(players).sort((a, b) => b.dps - a.dps);
+                
+                const finalLb = document.getElementById('final-leaderboard');
+                finalLb.innerHTML = '';
+
+                sorted.forEach((p, index) => {
+                    const rankColor = index === 0 ? 'text-yellow-400 font-black text-base' : index === 1 ? 'text-gray-300 font-bold' : index === 2 ? 'text-amber-600 font-bold' : 'text-gray-400';
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between items-center bg-gray-900/60 px-4 py-2.5 rounded-xl border border-gray-800";
+                    row.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <span class="${rankColor}">#${index + 1}</span>
+                            <span class="font-bold text-white">${p.name} ${p.name === myName ? '(Bạn)' : ''}</span>
+                        </div>
+                        <span class="font-bold text-green-400 game-font">${p.dps.toLocaleString()} DPS</span>
+                    `;
+                    finalLb.appendChild(row);
+                });
+            });
+        }
+
+        function returnHome() {
+            // Xóa dữ liệu tạm để reset lại phiên chơi mới
+            localStorage.removeItem('boss_player_name');
+            localStorage.removeItem('boss_player_dps');
+            localStorage.removeItem('boss_player_id');
+            // Tải lại trang để về sạch màn hình đăng nhập
+            location.reload();
         }
     </script>
 </body>
