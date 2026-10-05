@@ -173,8 +173,8 @@
         let timeLeft = 12;
         let selectedAnswerIndex = null; 
         let isRevealed = false; 
+        let totalActivePlayers = 0; // Biến lưu tổng số người chơi hiện tại trong phòng
 
-        // ĐÃ SỬA: Chỉ điền sẵn tên cũ vào ô nhập (nếu có) chứ không tự động đăng nhập ngầm nữa
         window.onload = function() {
             if (myName) {
                 document.getElementById('player-name').value = myName;
@@ -211,8 +211,8 @@
         function setupListeners() {
             db.ref('room/players').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
-                const count = Object.keys(players).length;
-                document.getElementById('player-count').innerText = count;
+                totalActivePlayers = Object.keys(players).length; // Cập nhật tổng số người chơi
+                document.getElementById('player-count').innerText = totalActivePlayers;
             });
 
             if (isAdmin) {
@@ -303,7 +303,8 @@
                 btn.id = `ans-btn-${idx}`;
                 btn.className = "py-4 px-6 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-bold transition text-left flex items-center justify-between cursor-pointer";
                 
-                let adminStatHTML = isAdmin ? `<span id="stat-count-${idx}" class="bg-gray-900 px-2.5 py-1 rounded-lg text-yellow-400 text-xs font-mono font-bold">0 người chọn</span>` : '';
+                // Hiển thị định dạng X / Tổng số người ở góc bên phải cho Admin
+                let adminStatHTML = isAdmin ? `<span id="stat-count-${idx}" class="bg-gray-900 px-2.5 py-1 rounded-lg text-yellow-400 text-xs font-mono font-bold">0/${totalActivePlayers} người chọn</span>` : '';
                 
                 btn.innerHTML = `<span><span class="text-red-500 mr-2 font-black">${['A', 'B', 'C', 'D'][idx]}.</span> ${ans}</span> ${adminStatHTML}`;
                 
@@ -352,7 +353,8 @@
             for (let i = 0; i < 4; i++) {
                 const statEl = document.getElementById(`stat-count-${i}`);
                 if (statEl) {
-                    statEl.innerText = `${counts[i] || 0} người chọn`;
+                    const countVal = counts[i] || 0;
+                    statEl.innerText = `${countVal}/${totalActivePlayers} người chọn`;
                 }
             }
         }
