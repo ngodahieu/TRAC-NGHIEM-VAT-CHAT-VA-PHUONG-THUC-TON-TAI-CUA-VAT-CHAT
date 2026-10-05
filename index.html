@@ -170,14 +170,33 @@
         let myDps = parseInt(localStorage.getItem('boss_player_dps') || '0');
         let currentQuestionIndex = 0;
         let timerInterval = null;
-        let timeLeft = 12;
         let selectedAnswerIndex = null; 
         let isRevealed = false; 
-        let totalActivePlayers = 0; // Biến lưu tổng số người chơi hiện tại trong phòng
+        let totalActivePlayers = 0; 
+        let questionTimeout = null;
 
+        // Tự động khôi phục phiên đăng nhập khi người dùng F5 (reload) lại trang
         window.onload = function() {
             if (myName) {
                 document.getElementById('player-name').value = myName;
+                // Kiểm tra nếu trước đó đã vào phòng hoặc đang chơi thì tự động kết nối lại
+                db.ref('room/gameState').once('value', (snapshot) => {
+                    const state = snapshot.val();
+                    if (state && (state.status === 'playing' || state.status === 'ended')) {
+                        // Xác định xem trước đó có phải Admin không dựa trên mật khẩu lưu hoặc tự động hỏi, 
+                        // ở đây ta có thể lưu trạng thái isAdmin vào sessionStorage
+                        if (sessionStorage.getItem('boss_is_admin') === 'true') {
+                            isAdmin = true;
+                        }
+                        document.getElementById('login-screen').classList.add('hidden');
+                        if (state.status === 'ended') {
+                            endGame(true);
+                        } else {
+                            startPlayingGame();
+                        }
+                        setupListeners();
+                    }
+                });
             }
         };
 
@@ -194,6 +213,9 @@
 
             if (passInput === ADMIN_SECRET) {
                 isAdmin = true;
+                sessionStorage.setItem('boss_is_admin', 'true');
+            } else {
+                sessionStorage.removeItem('boss_is_admin');
             }
 
             document.getElementById('login-screen').classList.add('hidden');
@@ -206,12 +228,20 @@
             }
 
             setupListeners();
+            
+            // Kiểm tra nếu game đã bắt từ trước rồi thì nhảy thẳng vào game luôn
+            db.ref('room/gameState').once('value', (snapshot) => {
+                const state = snapshot.val();
+                if (state && state.status === 'playing') {
+                    startPlayingGame();
+                }
+            });
         }
 
         function setupListeners() {
             db.ref('room/players').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
-                totalActivePlayers = Object.keys(players).length; // Cập nhật tổng số người chơi
+                totalActivePlayers = Object.keys(players).length;
                 document.getElementById('player-count').innerText = totalActivePlayers;
             });
 
@@ -224,16 +254,18 @@
                 const state = snapshot.val();
                 if (state) {
                     if (state.status === 'playing') {
-                        if (currentQuestionIndex !== state.questionIndex) {
+                        // Nếu đổi câu hỏi hoặc vừa reload lại trang trong lúc đang chơi
+                        if (currentQuestionIndex !== state.questionIndex || document.getElementById('game-screen').classList.contains('hidden')) {
                             currentQuestionIndex = state.questionIndex || 0;
-                            loadQuestion();
+                            if (document.getElementById('game-screen').classList.contains('hidden')) {
+                                startPlayingGame();
+                            } else {
+                                loadQuestion(state.startTime);
+                            }
                         }
+                        
                         if (state.revealed && !isRevealed) {
                             triggerRevealState();
-                        }
-                        if (!document.getElementById('game-screen').classList.contains('hidden') === false &&
-                            document.getElementById('lobby-screen').classList.contains('hidden') === false) {
-                            startPlayingGame();
                         }
                     } else if (state.status === 'ended') {
                         endGame(true);
@@ -250,16 +282,28 @@
         }
 
         function adminStartGame() {
-            db.ref('room/gameState').set({ status: 'playing', questionIndex: 0, revealed: false });
-            db.ref('room/bossHP').set(10000);
-            db.ref('room/answersCount').set([0, 0, 0, 0]);
-            db.ref('room/playerChoices').remove();
+            // Lấy thời gian server chuẩn để đồng bộ tuyệt đối cho tất cả mọi người
+            db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
+                const offset = offsetSnap.val() || 0;
+                const serverNow = Date.now() + offset;
+
+                db.ref('room/gameState').set({ 
+                    status: 'playing', 
+                    questionIndex: 0, 
+                    revealed: false,
+                    startTime: serverNow 
+                });
+                db.ref('room/bossHP').set(10000);
+                db.ref('room/answersCount').set([0, 0, 0, 0]);
+                db.ref('room/playerChoices').remove();
+            });
         }
 
         function startPlayingGame() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
 
             if (isAdmin) {
                 document.getElementById('role-notice').innerText = "👑 Chế độ: Admin (Người quan sát - Không chơi)";
@@ -271,12 +315,32 @@
                 document.getElementById('role-notice').className = "text-xs text-green-400 font-bold mb-3";
             }
             
-            loadQuestion();
+            // Lấy startTime từ database để load câu hỏi và đồng bộ thời gian chuẩn xác
+            db.ref('room/gameState').once('value', (snapshot) => {
+                const state = snapshot.val();
+                if (state) {
+                    currentQuestionIndex = state.questionIndex || 0;
+                    loadQuestion(state.startTime);
+                    if (state.revealed) {
+                        triggerRevealState();
+                    }
+                }
+            });
+
             listenBossHP();
             listenLeaderboard();
+            
+            // Khôi phục đáp án đã chọn trước đó (nếu có lưu ở firebase / local)
+            db.ref('room/playerChoices/' + myPlayerId).once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    selectedAnswerIndex = snapshot.val();
+                    const btn = document.getElementById(`ans-btn-${selectedAnswerIndex}`);
+                    if (btn) btn.classList.add('border-blue-500', 'bg-blue-950/40');
+                }
+            });
         }
 
-        function loadQuestion() {
+        function loadQuestion(startTime) {
             if (currentQuestionIndex >= questions.length) {
                 if (isAdmin) {
                     db.ref('room/gameState').update({ status: 'ended' });
@@ -285,12 +349,12 @@
             }
 
             if (timerInterval) clearInterval(timerInterval);
+            if (questionTimeout) clearTimeout(questionTimeout);
 
             selectedAnswerIndex = null;
             isRevealed = false;
-            timeLeft = 12;
+            
             document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
-            document.getElementById('timer').innerText = timeLeft + 's';
             
             const q = questions[currentQuestionIndex];
             document.getElementById('question-title').innerText = q.q;
@@ -303,7 +367,6 @@
                 btn.id = `ans-btn-${idx}`;
                 btn.className = "py-4 px-6 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-bold transition text-left flex items-center justify-between cursor-pointer";
                 
-                // Hiển thị định dạng X / Tổng số người ở góc bên phải cho Admin
                 let adminStatHTML = isAdmin ? `<span id="stat-count-${idx}" class="bg-gray-900 px-2.5 py-1 rounded-lg text-yellow-400 text-xs font-mono font-bold">0/${totalActivePlayers} người chọn</span>` : '';
                 
                 btn.innerHTML = `<span><span class="text-red-500 mr-2 font-black">${['A', 'B', 'C', 'D'][idx]}.</span> ${ans}</span> ${adminStatHTML}`;
@@ -316,24 +379,40 @@
                 container.appendChild(btn);
             });
 
-            timerInterval = setInterval(() => {
-                timeLeft--;
+            // Tính toán thời gian dựa vào Server Time Offset để đồng bộ tuyệt đối giữa Admin và mọi người chơi
+            db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
+                const offset = offsetSnap.val() || 0;
+                const serverNow = Date.now() + offset;
+                const elapsedSeconds = Math.floor((serverNow - (startTime || serverNow)) / 1000);
+                let timeLeft = Math.max(0, 12 - elapsedSeconds);
+
                 document.getElementById('timer').innerText = timeLeft + 's';
+
                 if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    if (isAdmin) {
+                    if (isAdmin && !isRevealed) {
                         db.ref('room/gameState').update({ revealed: true });
                     }
+                    return;
                 }
-            }, 1000);
+
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft >= 0) {
+                        document.getElementById('timer').innerText = timeLeft + 's';
+                    }
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        if (isAdmin && !isRevealed) {
+                            db.ref('room/gameState').update({ revealed: true });
+                        }
+                    }
+                }, 1000);
+            });
         }
 
         function selectAnswer(idx) {
             if (isRevealed || selectedAnswerIndex !== null) return; 
             
-            const oldBtn = document.getElementById(`ans-btn-${selectedAnswerIndex}`);
-            if (oldBtn) oldBtn.classList.remove('border-blue-500', 'bg-blue-950/40');
-
             selectedAnswerIndex = idx;
             const currentBtn = document.getElementById(`ans-btn-${idx}`);
             if (currentBtn) {
@@ -395,7 +474,7 @@
                     });
 
                     db.ref('room/players/' + myPlayerId).update({ dps: myDps });
-                } else {
+                } else if (selectedAnswerIndex !== null) {
                     document.body.classList.add('bg-red-950');
                     setTimeout(() => document.body.classList.remove('bg-red-950'), 400);
 
@@ -413,18 +492,28 @@
                 }
             }
 
-            setTimeout(() => {
-                if (isAdmin) {
+            // Chờ 10 giây xem đáp án rồi tự động chuyển câu tiếp (nếu là Admin)
+            if (isAdmin) {
+                questionTimeout = setTimeout(() => {
                     let nextIdx = currentQuestionIndex + 1;
                     if (nextIdx < questions.length) {
-                        db.ref('room/answersCount').set([0, 0, 0, 0]);
-                        db.ref('room/playerChoices').remove();
-                        db.ref('room/gameState').update({ questionIndex: nextIdx, revealed: false });
+                        db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
+                            const offset = offsetSnap.val() || 0;
+                            const serverNow = Date.now() + offset;
+
+                            db.ref('room/answersCount').set([0, 0, 0, 0]);
+                            db.ref('room/playerChoices').remove();
+                            db.ref('room/gameState').update({ 
+                                questionIndex: nextIdx, 
+                                revealed: false,
+                                startTime: serverNow 
+                            });
+                        });
                     } else {
                         db.ref('room/gameState').update({ status: 'ended' });
                     }
-                }
-            }, 10000); 
+                }, 10000);
+            }
         }
 
         function listenBossHP() {
@@ -464,6 +553,8 @@
 
         function endGame(isVictory) {
             if (timerInterval) clearInterval(timerInterval);
+            if (questionTimeout) clearTimeout(questionTimeout);
+            
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('login-screen').classList.add('hidden');
@@ -506,6 +597,7 @@
             localStorage.removeItem('boss_player_name');
             localStorage.removeItem('boss_player_dps');
             localStorage.removeItem('boss_player_id');
+            sessionStorage.clear();
             location.reload();
         }
     </script>
