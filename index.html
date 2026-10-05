@@ -67,6 +67,13 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
+    <!-- NÚT BẬT/TẮT ÂM THANH / NHẠC NỀN -->
+    <div class="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <button onclick="toggleAudioMute()" id="audio-toggle-btn" class="bg-gray-900/80 hover:bg-gray-800 border border-yellow-500/50 px-3 py-1.5 rounded-xl text-xs font-bold text-yellow-400 shadow-lg flex items-center gap-1 transition">
+            🔊 <span id="audio-status-text">Bật Nhạc</span>
+        </button>
+    </div>
+
     <!-- MÀN HÌNH ĐĂNG NHẬP & TÙY CHỈNH NHÂN VẬT 3D -->
     <div id="login-screen" class="card-bg p-6 rounded-2xl shadow-2xl w-full max-w-2xl text-center">
         <h1 class="game-font text-3xl font-bold text-red-500 mb-1 boss-glow">ĐẤU TRÙM HÚT MÁU</h1>
@@ -298,8 +305,11 @@
             weapon: 'katana'
         };
 
-        // --- HỆ THỐNG ÂM THANH KỊCH TÍNH (WEB AUDIO API) ---
+        // --- HỆ THỐNG ÂM THANH VÀ NHẠC NỀN HOÀNH TRÁNG (WEB AUDIO API) ---
         let audioCtx = null;
+        let isAudioMuted = false;
+        let bgmInterval = null;
+        let bgmStep = 0;
 
         function getAudioContext() {
             if (!audioCtx) {
@@ -311,7 +321,108 @@
             return audioCtx;
         }
 
+        function toggleAudioMute() {
+            isAudioMuted = !isAudioMuted;
+            const btnText = document.getElementById('audio-status-text');
+            const toggleBtn = document.getElementById('audio-toggle-btn');
+            if (isAudioMuted) {
+                btnText.innerText = "Tắt Nhạc";
+                toggleBtn.classList.add('opacity-50');
+                stopBGM();
+            } else {
+                btnText.innerText = "Bật Nhạc";
+                toggleBtn.classList.remove('opacity-50');
+                getAudioContext();
+                startBGM();
+            }
+            playClickSound();
+        }
+
+        // Nhạc nền Boss Battle kịch tính (Looping arpeggio bass & melody)
+        function startBGM() {
+            if (isAudioMuted || bgmInterval) return;
+            const ctx = getAudioContext();
+            
+            // Âm điệu Boss Battle (Minor scale pentatonic/epic pattern)
+            const bassNotes = [110, 110, 130.81, 146.83, 110, 98.00, 110, 164.81];
+            const melodyNotes = [220, 261.63, 329.63, 392.00, 440, 392.00, 329.63, 293.66];
+
+            bgmInterval = setInterval(() => {
+                if (isAudioMuted || !audioCtx) return;
+                try {
+                    const now = ctx.currentTime;
+                    
+                    // Bass oscillator
+                    const oscBass = ctx.createOscillator();
+                    const gainBass = ctx.createGain();
+                    oscBass.type = 'sawtooth';
+                    const freqB = bassNotes[bgmStep % bassNotes.length];
+                    oscBass.frequency.setValueAtTime(freqB, now);
+                    
+                    gainBass.gain.setValueAtTime(0.08, now);
+                    gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    
+                    const filter = ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(450, now);
+
+                    oscBass.connect(filter);
+                    filter.connect(gainBass);
+                    gainBass.connect(ctx.destination);
+                    
+                    oscBass.start(now);
+                    oscBass.stop(now + 0.35);
+
+                    // Melodic lead mỗi 2 nhịp
+                    if (bgmStep % 2 === 0) {
+                        const oscLead = ctx.createOscillator();
+                        const gainLead = ctx.createGain();
+                        oscLead.type = 'square';
+                        const freqM = melodyNotes[(bgmStep / 2) % melodyNotes.length];
+                        oscLead.frequency.setValueAtTime(freqM, now);
+                        
+                        gainLead.gain.setValueAtTime(0.05, now);
+                        gainLead.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+                        oscLead.connect(gainLead);
+                        gainLead.connect(ctx.destination);
+                        
+                        oscLead.start(now);
+                        oscLead.stop(now + 0.3);
+                    }
+
+                    bgmStep++;
+                } catch(e) { console.log(e); }
+            }, 300);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        function playClickSound() {
+            if (isAudioMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.08);
+            } catch(e) { console.log(e); }
+        }
+
         function playTingSound() {
+            if (isAudioMuted) return;
             try {
                 const ctx = getAudioContext();
                 const osc = ctx.createOscillator();
@@ -329,6 +440,7 @@
         }
 
         function playSlashSound() {
+            if (isAudioMuted) return;
             try {
                 const ctx = getAudioContext();
                 const osc = ctx.createOscillator();
@@ -346,6 +458,7 @@
         }
 
         function playDragonHitSound() {
+            if (isAudioMuted) return;
             try {
                 const ctx = getAudioContext();
                 const bufferSize = ctx.sampleRate * 0.4;
@@ -371,6 +484,7 @@
         }
 
         function playBuzzerSound() {
+            if (isAudioMuted) return;
             try {
                 const ctx = getAudioContext();
                 const osc = ctx.createOscillator();
@@ -389,6 +503,7 @@
         }
 
         function playDragonFireSound() {
+            if (isAudioMuted) return;
             try {
                 const ctx = getAudioContext();
                 const bufferSize = ctx.sampleRate * 0.7;
@@ -555,6 +670,7 @@
         }
 
         function update3DAvatar() {
+            playClickSound();
             avatarConfig = {
                 skinColor: document.getElementById('custom-skin-color').value,
                 hairStyle: document.getElementById('custom-hair-style').value,
@@ -676,9 +792,10 @@
             }
         };
 
-function joinGame() {
-            // MỞ KHÓA ÂM THANH: Gọi getAudioContext() ngay trong sự kiện click của người dùng
+        function joinGame() {
             getAudioContext();
+            startBGM();
+            playClickSound();
 
             const nameInput = document.getElementById('player-name').value.trim();
             const passInput = document.getElementById('admin-pass').value.trim();
@@ -761,6 +878,7 @@ function joinGame() {
         }
 
         function adminStartGame() {
+            playClickSound();
             db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
                 const offset = offsetSnap.val() || 0;
                 const serverNow = Date.now() + offset;
@@ -879,6 +997,7 @@ function joinGame() {
 
         function selectAnswer(idx) {
             if (isRevealed || selectedAnswerIndex !== null) return; 
+            playClickSound();
             
             selectedAnswerIndex = idx;
             const currentBtn = document.getElementById(`ans-btn-${idx}`);
@@ -912,6 +1031,7 @@ function joinGame() {
         }
 
         function adminShowAnswerAndNext() {
+            playClickSound();
             if (timerInterval) clearInterval(timerInterval);
             db.ref('room/gameState').update({ revealed: true });
         }
@@ -1076,7 +1196,7 @@ function joinGame() {
                 sorted.forEach((p, index) => {
                     const row = document.createElement('div');
                     row.className = "flex justify-between items-center bg-gray-900/40 px-3 py-1.5 rounded-lg";
-                    row.innerHTML = `<span>#${index + 1} 🛡️ ${p.name}</span> <span class="font-bold text-green-400">${p.dps} DPS</span>`;
+                    row.innerHTML = `<span>#${index + 1} 🛡️️ ${p.name}</span> <span class="font-bold text-green-400">${p.dps} DPS</span>`;
                     lbContainer.appendChild(row);
                 });
             });
@@ -1084,6 +1204,7 @@ function joinGame() {
 
         function endGame(isVictory) {
             if (timerInterval) clearInterval(timerInterval);
+            stopBGM();
             
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
@@ -1124,6 +1245,7 @@ function joinGame() {
         }
 
         function returnHome() {
+            playClickSound();
             localStorage.removeItem('boss_player_name');
             localStorage.removeItem('boss_player_dps');
             localStorage.removeItem('boss_player_id');
