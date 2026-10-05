@@ -212,7 +212,7 @@
 
             <div class="w-full flex justify-between items-center mt-3 text-xs text-gray-300 px-1 border-t border-gray-800 pt-2 z-10">
                 <span>Câu hỏi: <span id="current-q-num" class="text-white font-bold">1</span>/15</span>
-                <span>Thời gian: <span id="timer" class="text-yellow-400 font-bold text-sm">30s</span></span>
+                <span>Thời gian: <span id="timer" class="text-yellow-400 font-bold text-sm">15s</span></span>
                 <span id="my-dps-container">Điểm Tích Lũy: <span id="my-dps" class="text-green-400 font-bold">0</span></span>
             </div>
         </div>
@@ -729,7 +729,7 @@
             if (gameRenderer && gameScene && gameCamera) gameRenderer.render(gameScene, gameCamera);
         }
 
-        // 15 câu hỏi Triết học Mác - Lênin (Trích từ Document2.docx)
+        // 15 câu hỏi Triết học Mác - Lênin
         const questions = [
             { 
                 q: "Hạn chế lớn nhất của quan niệm duy vật trước Mác về vật chất là gì?", 
@@ -1010,6 +1010,23 @@
             playClickSound();
             dynamicMaxHP = totalActivePlayers * 7500;
 
+            db.ref('room/players').once('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const updates = {};
+                Object.keys(players).forEach(pId => {
+                    updates[pId + '/dps'] = 0;
+                    updates[pId + '/correct'] = 0;
+                });
+                db.ref('room/players').update(updates);
+            });
+
+            myDps = 0;
+            myCorrectCount = 0;
+            localStorage.setItem('boss_player_dps', myDps);
+            localStorage.setItem('boss_player_correct', myCorrectCount);
+            const myDpsEl = document.getElementById('my-dps');
+            if (myDpsEl) myDpsEl.innerText = myDps;
+
             db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
                 const offset = offsetSnap.val() || 0;
                 const serverNow = Date.now() + offset;
@@ -1113,7 +1130,7 @@
                 function updateTimer() {
                     const serverNow = Date.now() + offset;
                     const elapsedSeconds = Math.floor((serverNow - (startTime || serverNow)) / 1000);
-                    let timeLeft = Math.max(0, 30 - elapsedSeconds); // Cập nhật thời gian thành 30s
+                    let timeLeft = Math.max(0, 15 - elapsedSeconds); // Đã giảm từ 30s xuống 15s
 
                     document.getElementById('timer').innerText = timeLeft + 's';
 
@@ -1228,7 +1245,7 @@
                     const dmgText = document.createElement('div');
                     dmgText.className = "absolute text-red-200 bg-red-950/95 border-2 border-red-500 px-4 py-2 rounded-xl font-bold text-lg game-font z-50 animate-pulse shadow-2xl";
                     dmgText.style.top = "35%";
-                    dmgText.innerText = "🔥 HỎA LONG PHUN LỬA! ĐÁP ÁN CHƯA CHÍNH XÁC!";
+                    dmgText.innerText = "🔥 BỊ TRỪ 200 ĐIỂM! ĐÁP ÁN CHƯA CHÍNH XÁC!";
                     container.appendChild(dmgText);
                     setTimeout(() => dmgText.remove(), 1200);
                 }, 200);
@@ -1279,7 +1296,6 @@
                         if (selectedAnswerIndex === correctIdx && myCorrectRank > 0) {
                             playAttackAnimation(true);
 
-                            // Tính điểm tích lũy cá nhân dựa trên tốc độ
                             if (myCorrectRank === 1) {
                                 questionScoreEarned = 1000;
                             } else if (myCorrectRank >= 100) {
@@ -1296,7 +1312,6 @@
 
                             db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
 
-                            // Tính sát thương gây lên boss: Base = 500, cộng thêm % bù đắp nếu ít người trả lời đúng
                             let baseDamage = 500;
                             let activeCount = Math.max(1, totalActivePlayers);
                             let correctCountNum = Math.max(1, correctPlayers.length);
@@ -1309,6 +1324,12 @@
 
                         } else {
                             playAttackAnimation(false);
+                            
+                            myDps = Math.max(0, myDps - 200);
+                            localStorage.setItem('boss_player_dps', myDps);
+                            document.getElementById('my-dps').innerText = myDps;
+
+                            db.ref('room/players/' + myPlayerId).update({ dps: myDps });
                         }
                     });
                 });
@@ -1483,6 +1504,11 @@
 
         function returnHome() {
             playClickSound();
+            
+            if (isAdmin) {
+                db.ref('room').remove();
+            }
+
             localStorage.removeItem('boss_player_name');
             localStorage.removeItem('boss_player_dps');
             localStorage.removeItem('boss_player_correct');
