@@ -393,7 +393,7 @@
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('end-screen').classList.add('hidden');
-
+            init3DDragon();
             if (isAdmin) {
                 document.getElementById('role-notice').innerText = "👑 Chế độ: Admin (Người quan sát - Không chơi)";
                 document.getElementById('role-notice').className = "text-xs text-yellow-400 font-bold mb-3 z-10";
