@@ -16,24 +16,12 @@
         
         /* HIỆU ỨNG 3D DRAGON ANIMATIONS - HUNG BẠO & DỮ TỢN */
         @keyframes dragonHover {
-            0%, 100% { transform: translateY(0px) rotateX(8deg) rotateY(-8deg) scale(1); }
-            50% { transform: translateY(-15px) rotateX(-8deg) rotateY(8deg) scale(1.03); }
+            0%, 100% { transform: translateY(0px) scale(1); filter: brightness(1); }
+            50% { transform: translateY(-10px) scale(1.02); filter: brightness(1.15); }
         }
         .dragon-3d-container {
-            perspective: 1200px;
-            animation: dragonHover 3.5s ease-in-out infinite;
+            animation: dragonHover 4s ease-in-out infinite;
         }
-
-        @keyframes wingFlapLeft {
-            0%, 100% { transform: rotateZ(0deg) rotateY(0deg); }
-            50% { transform: rotateZ(-20deg) rotateY(-35deg); }
-        }
-        @keyframes wingFlapRight {
-            0%, 100% { transform: rotateZ(0deg) rotateY(0deg); }
-            50% { transform: rotateZ(20deg) rotateY(35deg); }
-        }
-        .wing-left { animation: wingFlapLeft 1.2s ease-in-out infinite; transform-origin: right center; }
-        .wing-right { animation: wingFlapRight 1.2s ease-in-out infinite; transform-origin: left center; }
 
         @keyframes fireBreathAnim {
             0% { transform: scale(0.3) translateY(0); opacity: 0; }
@@ -49,7 +37,6 @@
         }
         .anim-slash { animation: attackSlash 0.5s ease-out forwards; }
 
-        /* HIỆU ỨNG RỒNG PHUN LỬA VÀO NGƯỜI CHƠI KHI THUA / SAI */
         @keyframes screenFireBlast {
             0% { opacity: 0; transform: scale(0.6); filter: brightness(1); }
             30% { opacity: 0.95; transform: scale(1.2); filter: brightness(1.5) hue-rotate(-20deg); }
@@ -79,7 +66,6 @@
         <input type="text" id="player-name" placeholder="Nhập biệt danh của bạn..." maxlength="15" 
             class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl mb-4 text-center text-lg focus:outline-none focus:border-red-500 font-bold">
         
-        <!-- Lựa chọn Trang phục / Hệ chiến binh -->
         <div class="mb-4 text-left">
             <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Chọn Trang Phục Chiến Binh:</label>
             <div class="grid grid-cols-3 gap-2">
@@ -123,109 +109,24 @@
     <!-- MÀN HÌNH GAME CHÍNH -->
     <div id="game-screen" class="w-full max-w-3xl hidden">
         
-        <!-- KHU VỰC HIỂN THỊ MÔ HÌNH RỒNG 3D HUNG BẠO & ANIMATION -->
-        <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[290px] justify-center">
-            <div class="absolute inset-0 bg-gradient-to-b from-red-950/70 via-red-900/30 to-transparent pointer-events-none"></div>
+        <!-- KHU VỰC HÌNH ẢNH RỒNG 3D & ANIMATION -->
+        <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[300px] justify-center">
+            <div class="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/20 to-transparent pointer-events-none"></div>
             
-            <!-- Vùng chứa Rồng 3D SVG Siêu Dữ Tợn, Có Vẩy, Thân Dài, Đuôi & Cánh Khổng Lồ -->
+            <!-- Vùng chứa hình ảnh Rồng Vàng 3D chân thực có hiệu ứng lơ lửng và glow -->
             <div class="dragon-3d-container relative flex flex-col items-center z-10 my-1">
-                <svg class="w-56 h-56 filter drop-shadow-[0_0_30px_rgba(255,69,0,0.95)] select-none" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    
-                    <!-- Định nghĩa màu sắc và hiệu ứng vẩy rồng -->
-                    <defs>
-                        <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#ea580c"/>
-                            <stop offset="40%" stop-color="#dc2626"/>
-                            <stop offset="80%" stop-color="#7f1d1d"/>
-                            <stop offset="100%" stop-color="#450a0a"/>
-                        </linearGradient>
-                        <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#991b1b"/>
-                            <stop offset="50%" stop-color="#450a0a"/>
-                            <stop offset="100%" stop-color="#180303"/>
-                        </linearGradient>
-                        <radialGradient id="eyeGrad" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#fef08a"/>
-                            <stop offset="60%" stop-color="#f97316"/>
-                            <stop offset="100%" stop-color="#ef4444"/>
-                        </radialGradient>
-                        <!-- Mẫu vẩy rồng sắc nhọn -->
-                        <pattern id="scalePattern" width="10" height="10" patternUnits="userSpaceOnUse">
-                            <path d="M5 0 L10 5 L5 10 L0 5 Z" fill="#991b1b" stroke="#f97316" stroke-width="0.7"/>
-                        </pattern>
-                    </defs>
-
-                    <!-- Đuôi rồng dài uốn lượn sắc nhọn có gai -->
-                    <path d="M150 200C110 240 70 230 40 200C25 185 30 160 50 170C70 180 90 200 120 180C140 160 145 130 150 110Z" fill="url(#bodyGrad)" stroke="#f97316" stroke-width="2"/>
-                    <!-- Gai đuôi rồng -->
-                    <path d="M40 200L25 210L35 190Z" fill="#fbbf24"/>
-                    <path d="M55 185L45 200L55 175Z" fill="#fbbf24"/>
-                    <path d="M75 175L65 190L75 165Z" fill="#fbbf24"/>
-
-                    <!-- Thân rồng uốn lượn dài bọc vẩy -->
-                    <path d="M110 180C80 180 70 140 85 110C100 80 130 80 150 80C170 80 200 80 215 110C230 140 220 180 190 180C165 180 150 140 150 110Z" fill="url(#scalePattern)" stroke="#dc2626" stroke-width="2.5"/>
-                    <path d="M110 180C80 180 70 140 85 110C100 80 130 80 150 80C170 80 200 80 215 110C230 140 220 180 190 180C165 180 150 140 150 110Z" fill="url(#bodyGrad)" opacity="0.6"/>
-
-                    <!-- Vẩy dọc sống lưng rồng (Gai sắc nhọn) -->
-                    <path d="M150 75L143 55L150 65L157 55Z" fill="#fbbf24"/>
-                    <path d="M130 80L120 62L130 70L140 62Z" fill="#fbbf24"/>
-                    <path d="M170 80L160 62L170 70L180 62Z" fill="#fbbf24"/>
-                    <path d="M105 95L92 82L102 90L112 80Z" fill="#fbbf24"/>
-                    <path d="M195 95L188 80L198 90L208 82Z" fill="#fbbf24"/>
-
-                    <!-- Cánh Trái Khổng Lồ Dữ Tợn (Động) -->
-                    <g class="wing-left">
-                        <path d="M110 100C60 60 20 80 5 120C30 135 60 130 90 120L110 100Z" fill="url(#wingGrad)" stroke="#f97316" stroke-width="2"/>
-                        <path d="M60 90L20 115M75 105L35 140M90 115L60 160" stroke="#b91c1c" stroke-width="1.5"/>
-                        <!-- Móng vuốt cánh -->
-                        <path d="M5 120L0 128L8 123Z" fill="#fbbf24"/>
-                    </g>
-                    <!-- Cánh Phải Khổng Lồ Dữ Tợn (Động) -->
-                    <g class="wing-right">
-                        <path d="M190 100C240 60 280 80 295 120C270 135 240 130 210 120L190 100Z" fill="url(#wingGrad)" stroke="#f97316" stroke-width="2"/>
-                        <path d="M240 90L280 115M225 105L265 140M210 115L240 160" stroke="#b91c1c" stroke-width="1.5"/>
-                        <!-- Móng vuốt cánh -->
-                        <path d="M295 120L300 128L292 123Z" fill="#fbbf24"/>
-                    </g>
-
-                    <!-- Đầu Rồng 3D Hung Bạo -->
-                    <g transform="translate(150, 65)">
-                        <!-- Sừng rồng cực dài và sắc nhọn -->
-                        <path d="M -15 -10 L -45 -45 L -20 -25 Z" fill="#fbbf24" stroke="#78350f" stroke-width="1"/>
-                        <path d="M 15 -10 L 45 -45 L 20 -25 Z" fill="#fbbf24" stroke="#78350f" stroke-width="1"/>
-                        <path d="M -10 -15 L -30 -35 L -15 -25 Z" fill="#f59e0b"/>
-                        <path d="M 10 -15 L 30 -35 L 15 -25 Z" fill="#f59e0b"/>
-
-                        <!-- Giao diện đầu rồng chính -->
-                        <path d="M -22 -15 C -25 10 -15 25 0 35 C 15 25 25 10 22 -15 C 15 -25 -15 -25 -22 -15 Z" fill="url(#bodyGrad)" stroke="#f97316" stroke-width="2"/>
-                        
-                        <!-- Mắt rồng phát sáng dữ tợn -->
-                        <ellipse cx="-10" cy="-2" rx="5" ry="3" fill="url(#eyeGrad)" class="animate-pulse"/>
-                        <ellipse cx="10" cy="-2" rx="5" ry="3" fill="url(#eyeGrad)" class="animate-pulse"/>
-                        <circle cx="-10" cy="-2" r="1.5" fill="#000"/>
-                        <circle cx="10" cy="-2" r="1.5" fill="#000"/>
-
-                        <!-- Miệng rồng hầm hố & Răng nanh sắc nhọn -->
-                        <path d="M -12 22 L 0 32 L 12 22 C 6 28 -6 28 -12 22 Z" fill="#180303" stroke="#ef4444" stroke-width="1.5"/>
-                        <!-- Răng nanh -->
-                        <path d="M -8 22 L -5 28 L -2 22 Z" fill="#ffffff"/>
-                        <path d="M 8 22 L 5 28 L 2 22 Z" fill="#ffffff"/>
-                        <path d="M -3 24 L 0 29 L 3 24 Z" fill="#ffffff"/>
-                    </g>
-                </svg>
-
-                <!-- Hiệu ứng lửa phun liên tục từ miệng rồng -->
-                <div class="absolute top-36 w-16 h-20 bg-gradient-to-t from-transparent via-orange-500 to-yellow-300 rounded-full blur-md anim-dragon-fire pointer-events-none"></div>
+                <img src="hinh_nen_rong_vang_3d_1_aba0e2f825.jpg" alt="Hỏa Long Vương 3D" 
+                    class="w-64 h-40 sm:w-80 sm:h-48 object-cover rounded-2xl border-2 border-red-500/60 shadow-[0_0_35px_rgba(239,68,68,0.8)] select-none">
             </div>
             
-            <!-- Tên Boss & Trạng thái -->
-            <h2 class="game-font text-xl font-black text-red-500 boss-glow tracking-wider z-10 mt-1">HỎA LONG VƯƠNG 3D</h2>
+            <!-- Hiệu ứng lửa phun liên tục từ miệng rồng -->
+            <div class="absolute top-44 w-16 h-20 bg-gradient-to-t from-transparent via-orange-500 to-yellow-300 rounded-full blur-md anim-dragon-fire pointer-events-none z-20"></div>
+
+            <h2 class="game-font text-xl font-black text-red-500 boss-glow tracking-wider z-10 mt-2">HỎA LONG VƯƠNG 3D</h2>
             <p id="role-notice" class="text-xs text-yellow-400 font-bold mb-3 z-10">⚡ Chế độ: Người chơi tham gia chiến đấu</p>
 
-            <!-- Container hiệu ứng skill / phun lửa vào mình -->
             <div id="skill-effects-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-30"></div>
 
-            <!-- Thanh máu Boss -->
             <div class="w-full flex justify-between items-center mb-1 px-1 z-10">
                 <span class="text-xs font-bold text-gray-400">HP BOSS:</span>
                 <span id="boss-hp-text" class="game-font font-bold text-sm text-red-400">10,000 / 10,000 HP</span>
@@ -234,7 +135,6 @@
                 <div id="boss-hp-bar" class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
             </div>
 
-            <!-- Thông số phụ & Trang phục của bạn -->
             <div class="w-full flex justify-between items-center mt-3 text-xs text-gray-400 px-1 border-t border-gray-800 pt-2 z-10">
                 <span>Câu hỏi: <span id="current-q-num" class="text-white font-bold">1</span>/15</span>
                 <span>Thời gian: <span id="timer" class="text-yellow-400 font-bold text-sm">12s</span></span>
@@ -247,12 +147,9 @@
             <h3 id="question-title" class="text-xl font-bold mb-6 text-gray-100 min-h-[60px] flex items-center justify-center">
                 Đang tải câu hỏi...
             </h3>
-            <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Đáp án sinh tự động -->
-            </div>
+            <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             
             <div id="admin-controls" class="mt-6 hidden">
-                <!-- KHU VỰC THỐNG KÊ SỐ NGƯỜI CHỌN ĐÁP ÁN DÀNH CHO ADMIN -->
                 <div class="bg-gray-900/80 p-3 rounded-xl mb-3 border border-gray-800 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono">
                     <div class="bg-gray-800/80 p-2 rounded-lg text-center border border-gray-700">
                         <span class="text-red-400 font-bold">ĐA A:</span> <span id="stat-count-0" class="text-yellow-400 font-bold">0/0</span>
@@ -268,7 +165,6 @@
                     </div>
                 </div>
 
-                <!-- KHU VỰC NÚT ĐIỀU KHIỂN & TỔNG SỐ NGƯỜI CHƠI ĐÃ CHỌN -->
                 <div class="flex flex-col sm:flex-row items-center gap-3">
                     <button onclick="adminShowAnswerAndNext()" class="flex-1 w-full py-3 bg-yellow-600 hover:bg-yellow-500 text-gray-950 game-font font-black rounded-xl shadow-lg transition">
                         👑 HIỆN ĐÁP ÁN & CHUYỂN CÂU TIẾP THEO (ADMIN)
@@ -284,9 +180,7 @@
         <!-- Bảng xếp hạng DPS Trực tiếp (Top 3) -->
         <div class="card-bg p-4 rounded-2xl shadow-xl">
             <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-2">🏆 Bảng Xếp Hạng DPS Trực Tiếp (Top 3)</h4>
-            <div id="leaderboard" class="space-y-1 text-sm">
-                <!-- Render bằng JS -->
-            </div>
+            <div id="leaderboard" class="space-y-1 text-sm"></div>
         </div>
     </div>
 
@@ -297,9 +191,7 @@
         
         <div class="bg-gray-900/80 p-4 rounded-xl mb-6 text-left max-h-64 overflow-y-auto border border-gray-800">
             <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3">🏅 Bảng Xếp Hạng Toàn Bộ Người Chơi</h4>
-            <div id="final-leaderboard" class="space-y-2 text-sm">
-                <!-- Render bằng JS -->
-            </div>
+            <div id="final-leaderboard" class="space-y-2 text-sm"></div>
         </div>
 
         <button onclick="returnHome()" class="w-full py-3 bg-red-600 hover:bg-red-700 game-font font-bold rounded-xl transition shadow-lg shadow-red-600/30">
@@ -655,7 +547,6 @@
                 }, 300);
 
             } else {
-                // HIỆU ỨNG RỒNG PHUN LỬA TRỰC TIẾP VÀO MẶT NGƯỜI CHƠI KHI THUA / TRẢ LỜI SAI
                 effectEl.className = "absolute inset-0 bg-gradient-to-t from-red-600 via-orange-500 to-transparent opacity-90 anim-screen-fire z-40 pointer-events-none flex items-center justify-center";
                 effectEl.innerHTML = `<div class="text-6xl animate-bounce">🔥🐉🔥</div>`;
                 container.appendChild(effectEl);
@@ -711,7 +602,6 @@
                     db.ref('room/players/' + myPlayerId).update({ dps: myDps });
                 } else {
                     playAttackAnimation(false);
-
                     myDps = Math.max(0, myDps - 200); 
                     localStorage.setItem('boss_player_dps', myDps);
                     document.getElementById('my-dps').innerText = myDps;
