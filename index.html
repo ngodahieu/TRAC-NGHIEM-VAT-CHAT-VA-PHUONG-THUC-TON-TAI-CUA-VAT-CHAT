@@ -146,7 +146,7 @@
             </div>
             
             <div id="admin-controls" class="mt-6 hidden">
-                <!-- KHU VỰC THỐNG KÊ SỐ NGƯỜI CHỌN ĐÁP ÁN DÀNH CHO ADMIN (NẰM NGAY TRÊN/CẠNH NÚT ĐIỀU KHIỂN) -->
+                <!-- KHU VỰC THỐNG KÊ SỐ NGƯỜI CHỌN ĐÁP ÁN DÀNH CHO ADMIN (NẰM NGAY TRÊN NÚT ĐIỀU KHIỂN) -->
                 <div class="bg-gray-900/80 p-3 rounded-xl mb-3 border border-gray-800 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono">
                     <div class="bg-gray-800/80 p-2 rounded-lg text-center border border-gray-700">
                         <span class="text-red-400 font-bold">ĐA A:</span> <span id="stat-count-0" class="text-yellow-400 font-bold">0/0</span>
@@ -162,9 +162,16 @@
                     </div>
                 </div>
 
-                <button onclick="adminShowAnswerAndNext()" class="w-full py-3 bg-yellow-600 hover:bg-yellow-500 text-gray-950 game-font font-black rounded-xl shadow-lg transition">
-                    👑 HIỆN ĐÁP ÁN & CHUYỂN CÂU TIẾP THEO (ADMIN)
-                </button>
+                <!-- KHU VỰC NÚT ĐIỀU KHIỂN & TỔNG SỐ NGƯỜI CHƠI ĐÃ CHỌN BÊN PHẢI -->
+                <div class="flex flex-col sm:flex-row items-center gap-3">
+                    <button onclick="adminShowAnswerAndNext()" class="flex-1 w-full py-3 bg-yellow-600 hover:bg-yellow-500 text-gray-950 game-font font-black rounded-xl shadow-lg transition">
+                        👑 HIỆN ĐÁP ÁN & CHUYỂN CÂU TIẾP THEO (ADMIN)
+                    </button>
+                    <div class="w-full sm:w-auto bg-gray-900/90 border border-gray-700 px-4 py-3 rounded-xl text-center shadow-inner">
+                        <span class="text-xs text-gray-400 block font-bold">Đã chọn:</span>
+                        <span id="total-answered-sum" class="game-font text-lg font-black text-yellow-400">0/0</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -351,7 +358,8 @@
                             }
                         }
                         
-                        if (state.revealed && !isRevealed) {
+                        // Chỉ trigger reveal khi trạng thái revealed thực sự là true
+                        if (state.revealed && !isRevealed && currentQuestionIndex === state.questionIndex) {
                             triggerRevealState();
                         }
                     } else if (state.status === 'ended') {
@@ -435,6 +443,7 @@
 
             if (timerInterval) clearInterval(timerInterval);
 
+            // Đảm bảo reset trạng thái ngay khi load câu hỏi mới
             selectedAnswerIndex = null;
             isRevealed = false;
             
@@ -451,7 +460,6 @@
                 btn.id = `ans-btn-${idx}`;
                 btn.className = "py-4 px-6 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-bold transition text-left flex items-center justify-between cursor-pointer";
                 
-                // Đã loại bỏ số lượng người chọn hiển thị trên từng nút đáp án của người chơi
                 btn.innerHTML = `<span><span class="text-red-500 mr-2 font-black">${['A', 'B', 'C', 'D'][idx]}.</span> ${ans}</span>`;
                 
                 if (!isAdmin) {
@@ -462,7 +470,6 @@
                 container.appendChild(btn);
             });
 
-            // Đồng bộ thời gian chuẩn xác dựa trên Firebase Server Time
             db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
                 const offset = offsetSnap.val() || 0;
                 
@@ -505,12 +512,18 @@
         }
 
         function updateAdminAnswerStats(counts) {
+            let totalAnsweredSum = 0;
             for (let i = 0; i < 4; i++) {
                 const statEl = document.getElementById(`stat-count-${i}`);
+                const countVal = counts[i] || 0;
+                totalAnsweredSum += countVal;
                 if (statEl) {
-                    const countVal = counts[i] || 0;
                     statEl.innerText = `${countVal}/${totalActivePlayers}`;
                 }
+            }
+            const totalSumEl = document.getElementById('total-answered-sum');
+            if (totalSumEl) {
+                totalSumEl.innerText = `${totalAnsweredSum}/${totalActivePlayers}`;
             }
         }
 
@@ -618,6 +631,7 @@
                             const offset = offsetSnap.val() || 0;
                             const serverNow = Date.now() + offset;
 
+                            // Cập nhật revealed: false đồng thời với questionIndex để tránh lỗi xung đột trạng thái cũ
                             db.ref('room/answersCount').set([0, 0, 0, 0]);
                             db.ref('room/playerChoices').remove();
                             db.ref('room/gameState').update({ 
@@ -694,7 +708,7 @@
                 const finalLb = document.getElementById('final-leaderboard');
                 finalLb.innerHTML = '';
 
-                sorted.forEach((p, index) => {
+                    sorted.forEach((p, index) => {
                     const rankColor = index === 0 ? 'text-yellow-400 font-black text-base' : index === 1 ? 'text-gray-300 font-bold' : index === 2 ? 'text-amber-600 font-bold' : 'text-gray-400';
                     const skinIcon = skinData[p.skin] ? skinData[p.skin].icon : '⚔️';
                     const row = document.createElement('div');
