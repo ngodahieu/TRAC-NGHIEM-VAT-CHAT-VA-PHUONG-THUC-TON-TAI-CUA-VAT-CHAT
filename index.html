@@ -254,20 +254,24 @@
             </div>
         </div>
 
-        <!-- Bảng xếp hạng DPS Trực tiếp (Top 3) -->
+        <!-- BẢNG XẾP HẠNG / THÔNG TIN TOP CỦA NGƯỜI CHƠI (HOẶC ĐẦY ĐỦ CHO ADMIN) -->
         <div class="card-bg p-4 rounded-2xl shadow-xl">
-            <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-2">🏆 Bảng Xếp Hạng DPS Trực Tiếp (Top 3)</h4>
+            <h4 id="leaderboard-title" class="game-font text-xs text-yellow-400 font-bold uppercase mb-2">🏆 Thông Tin Xếp Hạng</h4>
             <div id="leaderboard" class="space-y-1 text-sm"></div>
         </div>
     </div>
 
-    <!-- MÀN HÌNH KẾT THÚC -->
-    <div id="end-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-2xl text-center hidden">
+    <!-- MÀN HÌNH KẾT THÚC (VINH DANH) -->
+    <div id="end-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-3xl text-center hidden">
         <h2 id="end-title" class="game-font text-3xl font-bold mb-2">CHIẾN THẮNG!</h2>
-        <p id="end-subtitle" class="text-gray-300 mb-6 text-base">Trận đại chiến đã khép lại. Dưới đây là bảng xếp hạng chung cuộc:</p>
+        <p id="end-subtitle" class="text-gray-300 mb-6 text-base">Trận đại chiến đã khép lại. Dưới đây là bảng vinh danh các chiến binh:</p>
         
-        <div class="bg-gray-900/80 p-4 rounded-xl mb-6 text-left max-h-64 overflow-y-auto border border-gray-800">
-            <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3">🏅 Bảng Xếp Hạng Toàn Bộ Người Chơi</h4>
+        <!-- BỤC VINH DANH TOP 1, 2, 3 -->
+        <div id="podium-container" class="grid grid-cols-3 gap-3 mb-6 items-end justify-center px-4"></div>
+
+        <!-- DANH SÁCH TỪ RANK 4 TRỞ XUỐNG -->
+        <div class="bg-gray-900/80 p-4 rounded-xl mb-6 text-left max-h-56 overflow-y-auto border border-gray-800">
+            <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3">🏅 Danh Sách Các Chiến Binh Khác (Từ Hạng 4)</h4>
             <div id="final-leaderboard" class="space-y-2 text-sm"></div>
         </div>
 
@@ -305,7 +309,7 @@
             weapon: 'katana'
         };
 
-        // --- HỆ THỐNG ÂM THANH VÀ NHẠC NỀN HOÀNH TRÁNG (WEB AUDIO API) ---
+        // --- HỆ THỐNG ÂM THANH & NHẠC NỀN KỊCH TÍNH, SÔI ĐỘNG HƠN ---
         let audioCtx = null;
         let isAudioMuted = false;
         let bgmInterval = null;
@@ -338,62 +342,57 @@
             playClickSound();
         }
 
-        // Nhạc nền Boss Battle kịch tính (Looping arpeggio bass & melody)
+        // Nhạc nền Boss Battle kịch tính, dồn dập & sôi động hơn (Tempo nhanh hơn 180ms)
         function startBGM() {
             if (isAudioMuted || bgmInterval) return;
             const ctx = getAudioContext();
             
-            // Âm điệu Boss Battle (Minor scale pentatonic/epic pattern)
-            const bassNotes = [110, 110, 130.81, 146.83, 110, 98.00, 110, 164.81];
-            const melodyNotes = [220, 261.63, 329.63, 392.00, 440, 392.00, 329.63, 293.66];
+            const epicBass = [110, 123.47, 130.81, 146.83, 164.81, 130.81, 110, 98.00];
+            const epicLead = [220, 329.63, 440, 523.25, 440, 392.00, 329.63, 293.66];
 
             bgmInterval = setInterval(() => {
                 if (isAudioMuted || !audioCtx) return;
                 try {
                     const now = ctx.currentTime;
                     
-                    // Bass oscillator
+                    // Bass dồn dập
                     const oscBass = ctx.createOscillator();
                     const gainBass = ctx.createGain();
                     oscBass.type = 'sawtooth';
-                    const freqB = bassNotes[bgmStep % bassNotes.length];
-                    oscBass.frequency.setValueAtTime(freqB, now);
+                    oscBass.frequency.setValueAtTime(epicBass[bgmStep % epicBass.length], now);
                     
-                    gainBass.gain.setValueAtTime(0.08, now);
-                    gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    gainBass.gain.setValueAtTime(0.09, now);
+                    gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
                     
                     const filter = ctx.createBiquadFilter();
                     filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(450, now);
+                    filter.frequency.setValueAtTime(600, now);
 
                     oscBass.connect(filter);
                     filter.connect(gainBass);
                     gainBass.connect(ctx.destination);
                     
                     oscBass.start(now);
-                    oscBass.stop(now + 0.35);
+                    oscBass.stop(now + 0.22);
 
-                    // Melodic lead mỗi 2 nhịp
-                    if (bgmStep % 2 === 0) {
-                        const oscLead = ctx.createOscillator();
-                        const gainLead = ctx.createGain();
-                        oscLead.type = 'square';
-                        const freqM = melodyNotes[(bgmStep / 2) % melodyNotes.length];
-                        oscLead.frequency.setValueAtTime(freqM, now);
-                        
-                        gainLead.gain.setValueAtTime(0.05, now);
-                        gainLead.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    // Melody sắc bén
+                    const oscLead = ctx.createOscillator();
+                    const gainLead = ctx.createGain();
+                    oscLead.type = 'square';
+                    oscLead.frequency.setValueAtTime(epicLead[bgmStep % epicLead.length], now);
+                    
+                    gainLead.gain.setValueAtTime(0.06, now);
+                    gainLead.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
 
-                        oscLead.connect(gainLead);
-                        gainLead.connect(ctx.destination);
-                        
-                        oscLead.start(now);
-                        oscLead.stop(now + 0.3);
-                    }
+                    oscLead.connect(gainLead);
+                    gainLead.connect(ctx.destination);
+                    
+                    oscLead.start(now);
+                    oscLead.stop(now + 0.18);
 
                     bgmStep++;
                 } catch(e) { console.log(e); }
-            }, 300);
+            }, 180);
         }
 
         function stopBGM() {
@@ -764,6 +763,7 @@
 
         let myName = localStorage.getItem('boss_player_name') || '';
         let myDps = parseInt(localStorage.getItem('boss_player_dps') || '0');
+        let myCorrectCount = parseInt(localStorage.getItem('boss_player_correct') || '0');
         let currentQuestionIndex = 0;
         let timerInterval = null;
         let selectedAnswerIndex = null; 
@@ -821,7 +821,7 @@
 
             if (!isAdmin) {
                 const playerRef = db.ref('room/players/' + myPlayerId);
-                playerRef.update({ name: myName, dps: myDps, avatar: avatarConfig });
+                playerRef.update({ name: myName, dps: myDps, correct: myCorrectCount, avatar: avatarConfig });
                 playerRef.onDisconnect().remove();
             }
 
@@ -908,9 +908,11 @@
                 document.getElementById('role-notice').innerText = "👑 Chế độ: Admin (Người quan sát - Không chơi)";
                 document.getElementById('role-notice').className = "text-xs text-yellow-400 font-bold mb-3 z-10";
                 document.getElementById('admin-controls').classList.remove('hidden');
+                document.getElementById('leaderboard-title').innerText = "🏆 Bảng Xếp Hạng Trực Tiếp (Dành Cho Admin)";
             } else {
                 document.getElementById('role-notice').innerText = "⚡ Chế độ: Người chơi tham gia chiến đấu";
                 document.getElementById('role-notice').className = "text-xs text-green-400 font-bold mb-3 z-10";
+                document.getElementById('leaderboard-title').innerText = "📊 Trạng Thái Xếp Hạng Của Bạn";
             }
             
             db.ref('room/gameState').once('value', (snapshot) => {
@@ -1119,7 +1121,9 @@
                     playAttackAnimation(true);
                     const damage = 500; 
                     myDps += damage;
+                    myCorrectCount += 1;
                     localStorage.setItem('boss_player_dps', myDps);
+                    localStorage.setItem('boss_player_correct', myCorrectCount);
                     document.getElementById('my-dps').innerText = myDps;
 
                     db.ref('room/bossHP').transaction((currentHP) => {
@@ -1127,13 +1131,13 @@
                         return Math.max(0, currentHP - damage);
                     });
 
-                    db.ref('room/players/' + myPlayerId).update({ dps: myDps });
+                    db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
                 } else {
                     playAttackAnimation(false);
                     myDps = Math.max(0, myDps - 200); 
                     localStorage.setItem('boss_player_dps', myDps);
                     document.getElementById('my-dps').innerText = myDps;
-                    db.ref('room/players/' + myPlayerId).update({ dps: myDps });
+                    db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
                 }
             } else {
                 const buttons = document.getElementById('answers-container').children;
@@ -1185,23 +1189,48 @@
             });
         }
 
+        // --- XỬ LÝ LẮNG NGHE & HIỂN THỊ XẾP HẠNG (PHÂN BIỆT ADMIN & NGƯỜI CHƠI) ---
         function listenLeaderboard() {
-            db.ref('room/players').orderByChild('dps').limitToLast(3).on('value', (snapshot) => {
+            db.ref('room/players').orderByChild('dps').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
                 const sorted = Object.values(players).sort((a, b) => b.dps - a.dps);
                 
                 const lbContainer = document.getElementById('leaderboard');
                 lbContainer.innerHTML = '';
-                
-                sorted.forEach((p, index) => {
+
+                if (isAdmin) {
+                    // Admin thấy chi tiết top
+                    sorted.forEach((p, index) => {
+                        const row = document.createElement('div');
+                        row.className = "flex justify-between items-center bg-gray-900/40 px-3 py-1.5 rounded-lg";
+                        row.innerHTML = `<span>#${index + 1} 🛡 ${p.name}</span> <span class="font-bold text-green-400">${p.dps} DPS (${p.correct || 0}/15 đúng)</span>`;
+                        lbContainer.appendChild(row);
+                    });
+                } else {
+                    // Người chơi chỉ thấy thứ hạng thuộc khoảng top (Top 10, Top 20, Top 30,...) và max điểm trong top đó
+                    let myRank = sorted.findIndex(p => p.name === myName) + 1;
+                    if (myRank === 0) myRank = sorted.length + 1;
+
+                    // Tính mốc top (làm tròn lên hàng chục: 1-10 -> Top 10, 11-20 -> Top 20,...)
+                    let topTier = Math.ceil(myRank / 10) * 10;
+                    if (topTier < 10) topTier = 10;
+
+                    // Lấy điểm cao nhất trong top tier đó (hoặc trong toàn bộ nhóm)
+                    let tierPlayers = sorted.slice(0, topTier);
+                    let maxScoreInTier = tierPlayers.length > 0 ? tierPlayers[0].dps : myDps;
+
                     const row = document.createElement('div');
-                    row.className = "flex justify-between items-center bg-gray-900/40 px-3 py-1.5 rounded-lg";
-                    row.innerHTML = `<span>#${index + 1} 🛡️️ ${p.name}</span> <span class="font-bold text-green-400">${p.dps} DPS</span>`;
+                    row.className = "bg-gray-900/60 p-3 rounded-xl border border-gray-800 text-center space-y-1";
+                    row.innerHTML = `
+                        <div class="text-xs text-gray-300">Bạn đang nằm trong nhóm: <span class="game-font text-yellow-400 font-bold text-base">TOP ${topTier}</span></div>
+                        <div class="text-xs">Điểm của bạn: <span class="text-green-400 font-bold">${myDps} DPS</span> | Điểm cao nhất trong Top ${topTier}: <span class="text-red-400 font-bold">${maxScoreInTier} DPS</span></div>
+                    `;
                     lbContainer.appendChild(row);
-                });
+                }
             });
         }
 
+        // --- MÀN HÌNH KẾT THÚC & VINH DANH ---
         function endGame(isVictory) {
             if (timerInterval) clearInterval(timerInterval);
             stopBGM();
@@ -1225,22 +1254,56 @@
                 const players = snapshot.val() || {};
                 const sorted = Object.values(players).sort((a, b) => b.dps - a.dps);
                 
+                const podiumContainer = document.getElementById('podium-container');
                 const finalLb = document.getElementById('final-leaderboard');
+                podiumContainer.innerHTML = '';
                 finalLb.innerHTML = '';
 
-                    sorted.forEach((p, index) => {
-                    const rankColor = index === 0 ? 'text-yellow-400 font-bold text-base' : index === 1 ? 'text-gray-300 font-bold' : index === 2 ? 'text-amber-600 font-bold' : 'text-gray-400';
-                    const row = document.createElement('div');
-                    row.className = "flex justify-between items-center bg-gray-900/60 px-4 py-2.5 rounded-xl border border-gray-800";
-                    row.innerHTML = `
-                        <div class="flex items-center space-x-3">
-                            <span class="${rankColor}">#${index + 1}</span>
-                            <span class="font-bold text-white">🛡️ ${p.name} ${p.name === myName ? '(Bạn)' : ''}</span>
-                        </div>
-                        <span class="font-bold text-green-400 game-font">${p.dps.toLocaleString()} DPS</span>
-                    `;
-                    finalLb.appendChild(row);
+                // Sắp xếp bục vinh danh Top 2 (trái), Top 1 (giữa, cao hơn), Top 3 (phải)
+                let podiumOrder = [
+                    { rank: 2, data: sorted[1], color: 'from-gray-400 to-gray-600', height: 'h-36', crown: '🥈' },
+                    { rank: 1, data: sorted[0], color: 'from-yellow-400 to-yellow-600', height: 'h-44', crown: '👑 🥇' },
+                    { rank: 3, data: sorted[2], color: 'from-amber-600 to-amber-800', height: 'h-28', crown: '🥉' }
+                ];
+
+                podiumOrder.forEach(item => {
+                    if (item.data) {
+                        const pCard = document.createElement('div');
+                        pCard.className = `flex flex-col items-center justify-end bg-gradient-to-t ${item.color} rounded-xl p-3 shadow-lg border border-white/20 ${item.height}`;
+                        pCard.innerHTML = `
+                            <span class="text-xl mb-1">${item.crown}</span>
+                            <span class="font-bold text-xs text-white truncate w-full text-center">🛡️ ${item.data.name}</span>
+                            <span class="text-[11px] text-yellow-200 font-bold">${item.data.dps} DPS</span>
+                            <span class="text-[10px] text-gray-100">${item.data.correct || 0}/15 đúng</span>
+                        `;
+                        podiumContainer.appendChild(pCard);
+                    } else {
+                        const emptyCard = document.createElement('div');
+                        podiumContainer.appendChild(emptyCard);
+                    }
                 });
+
+                // Từ rank 4 trở xuống xếp thành hàng dài đầy đủ
+                if (sorted.length > 3) {
+                    for (let i = 3; i < sorted.length; i++) {
+                        const p = sorted[i];
+                        const row = document.createElement('div');
+                        row.className = "flex justify-between items-center bg-gray-900/60 px-4 py-2.5 rounded-xl border border-gray-800";
+                        row.innerHTML = `
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-400 font-bold">#${i + 1}</span>
+                                <span class="font-bold text-white">🛡️ ${p.name} ${p.name === myName ? '(Bạn)' : ''}</span>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-xs text-yellow-400 font-bold">${p.correct || 0}/15 câu đúng</span>
+                                <span class="font-bold text-green-400 game-font">${p.dps.toLocaleString()} DPS</span>
+                            </div>
+                        `;
+                        finalLb.appendChild(row);
+                    }
+                } else {
+                    finalLb.innerHTML = `<div class="text-center text-xs text-gray-400 py-2">Chưa có thêm chiến binh từ hạng 4 trở xuống.</div>`;
+                }
             });
         }
 
@@ -1248,6 +1311,7 @@
             playClickSound();
             localStorage.removeItem('boss_player_name');
             localStorage.removeItem('boss_player_dps');
+            localStorage.removeItem('boss_player_correct');
             localStorage.removeItem('boss_player_id');
             sessionStorage.clear();
             location.reload();
