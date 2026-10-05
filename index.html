@@ -146,6 +146,22 @@
             </div>
             
             <div id="admin-controls" class="mt-6 hidden">
+                <!-- KHU VỰC THỐNG KÊ SỐ NGƯỜI CHỌN ĐÁP ÁN DÀNH CHO ADMIN (NẰM NGAY TRÊN/CẠNH NÚT ĐIỀU KHIỂN) -->
+                <div class="bg-gray-900/80 p-3 rounded-xl mb-3 border border-gray-800 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono">
+                    <div class="bg-gray-800/80 p-2 rounded-lg text-center border border-gray-700">
+                        <span class="text-red-400 font-bold">ĐA A:</span> <span id="stat-count-0" class="text-yellow-400 font-bold">0/0</span>
+                    </div>
+                    <div class="bg-gray-800/80 p-2 rounded-lg text-center border border-gray-700">
+                        <span class="text-red-400 font-bold">ĐA B:</span> <span id="stat-count-1" class="text-yellow-400 font-bold">0/0</span>
+                    </div>
+                    <div class="bg-gray-800/80 p-2 rounded-lg text-center border border-gray-700">
+                        <span class="text-red-400 font-bold">ĐA C:</span> <span id="stat-count-2" class="text-yellow-400 font-bold">0/0</span>
+                    </div>
+                    <div class="bg-gray-800/80 p-2 rounded-lg text-center border border-gray-700">
+                        <span class="text-red-400 font-bold">ĐA D:</span> <span id="stat-count-3" class="text-yellow-400 font-bold">0/0</span>
+                    </div>
+                </div>
+
                 <button onclick="adminShowAnswerAndNext()" class="w-full py-3 bg-yellow-600 hover:bg-yellow-500 text-gray-950 game-font font-black rounded-xl shadow-lg transition">
                     👑 HIỆN ĐÁP ÁN & CHUYỂN CÂU TIẾP THEO (ADMIN)
                 </button>
@@ -432,12 +448,11 @@
 
             q.answers.forEach((ans, idx) => {
                 const btn = document.createElement('button');
-                btn.id = `ans-btn-${idx}`; // Đã sửa lỗi: Thêm đúng ID để hàm selectAnswer nhận diện được nút
+                btn.id = `ans-btn-${idx}`;
                 btn.className = "py-4 px-6 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-bold transition text-left flex items-center justify-between cursor-pointer";
                 
-                let adminStatHTML = isAdmin ? `<span id="stat-count-${idx}" class="bg-gray-900 px-2.5 py-1 rounded-lg text-yellow-400 text-xs font-mono font-bold">0/${totalActivePlayers} người chọn</span>` : '';
-                
-                btn.innerHTML = `<span><span class="text-red-500 mr-2 font-black">${['A', 'B', 'C', 'D'][idx]}.</span> ${ans}</span> ${adminStatHTML}`;
+                // Đã loại bỏ số lượng người chọn hiển thị trên từng nút đáp án của người chơi
+                btn.innerHTML = `<span><span class="text-red-500 mr-2 font-black">${['A', 'B', 'C', 'D'][idx]}.</span> ${ans}</span>`;
                 
                 if (!isAdmin) {
                     btn.onclick = () => selectAnswer(idx);
@@ -447,7 +462,7 @@
                 container.appendChild(btn);
             });
 
-            // ĐỒNG BỘ THỜI GIAN CHUẨN XÁC DỰA TRÊN FIREBASE SERVER TIME
+            // Đồng bộ thời gian chuẩn xác dựa trên Firebase Server Time
             db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
                 const offset = offsetSnap.val() || 0;
                 
@@ -460,14 +475,13 @@
 
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
-                        // Chỉ Admin mới có quyền tự động chuyển trạng thái revealed khi hết giờ
                         if (isAdmin && !isRevealed) {
                             db.ref('room/gameState').update({ revealed: true });
                         }
                     }
                 }
 
-                updateTimer(); // Chạy ngay lập tức một lần tránh độ trễ 1 giây đầu
+                updateTimer();
                 timerInterval = setInterval(updateTimer, 1000);
             });
         }
@@ -495,7 +509,7 @@
                 const statEl = document.getElementById(`stat-count-${i}`);
                 if (statEl) {
                     const countVal = counts[i] || 0;
-                    statEl.innerText = `${countVal}/${totalActivePlayers} người chọn`;
+                    statEl.innerText = `${countVal}/${totalActivePlayers}`;
                 }
             }
         }
@@ -596,7 +610,6 @@
                 }
             }
 
-            // Chỉ Admin tự động chuyển câu hỏi sau khi hiện đáp án 5 giây
             if (isAdmin) {
                 setTimeout(() => {
                     let nextIdx = currentQuestionIndex + 1;
