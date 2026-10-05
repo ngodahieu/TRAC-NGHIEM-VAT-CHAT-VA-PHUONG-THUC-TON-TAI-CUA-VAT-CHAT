@@ -676,7 +676,10 @@
             }
         };
 
-        function joinGame() {
+function joinGame() {
+            // MỞ KHÓA ÂM THANH: Gọi getAudioContext() ngay trong sự kiện click của người dùng
+            getAudioContext();
+
             const nameInput = document.getElementById('player-name').value.trim();
             const passInput = document.getElementById('admin-pass').value.trim();
 
@@ -714,7 +717,7 @@
                 }
             });
         }
-
+    
         function setupListeners() {
             db.ref('room/players').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
