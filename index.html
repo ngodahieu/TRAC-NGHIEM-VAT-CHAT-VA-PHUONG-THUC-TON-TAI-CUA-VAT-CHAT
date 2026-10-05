@@ -80,7 +80,7 @@
         <p class="text-gray-300 mb-4 text-sm">Thiết kế chiến binh 3D nâng cấp của bạn trước khi bước vào đại chiến!</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-            <!-- Khu vực hiển thị khung 3D tùy chỉnh nhân vật (nền trắng hơi xám xanh) -->
+            <!-- Khu vực hiển thị khung 3D tùy chỉnh nhân vật -->
             <div class="relative w-full h-72 bg-[#edf2f7] rounded-xl border border-red-500/40 overflow-hidden shadow-inner flex items-center justify-center">
                 <div id="avatar-canvas-container" class="w-full h-full cursor-grab"></div>
                 <div class="absolute bottom-2 left-2 bg-gray-900/80 px-2 py-1 rounded text-[10px] text-yellow-400 font-bold">Xoay để xem 360°</div>
@@ -159,7 +159,6 @@
     <!-- MÀN HÌNH CHỜ (LOBBY) -->
     <div id="lobby-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-xl text-center hidden">
         <div class="flex justify-center mb-4">
-            <!-- Khung avatar lobby đổi sang nền trắng hơi xám xanh -->
             <div id="lobby-avatar-container" class="w-36 h-36 bg-[#edf2f7] rounded-2xl border border-yellow-500/50 overflow-hidden shadow-lg"></div>
         </div>
         <h2 class="game-font text-2xl font-bold text-yellow-400 mb-1">PHÒNG CHỜ CHIẾN BINH</h2>
@@ -167,6 +166,7 @@
         <div class="bg-gray-900/60 p-3 rounded-xl mb-4 border border-gray-800">
             <span class="text-xs text-gray-300">Số lượng người đang online:</span>
             <div id="player-count" class="game-font text-2xl font-bold text-green-400">1</div>
+            <div class="text-[11px] text-yellow-300 mt-1">Máu Boss dự kiến: <span id="preview-boss-hp" class="font-bold">7,500</span> HP</div>
         </div>
         <button id="admin-start-btn" onclick="adminStartGame()" class="w-full py-3 bg-gradient-to-r from-yellow-600 to-red-600 hover:from-yellow-500 hover:to-red-500 game-font text-base font-bold rounded-xl transition shadow-lg shadow-yellow-600/30 hidden mb-3">
             👑 BẮT ĐẦU TRẬN ĐẤU (DÀNH CHO ADMIN)
@@ -177,17 +177,14 @@
     <!-- MÀN HÌNH GAME CHÍNH -->
     <div id="game-screen" class="w-full max-w-3xl hidden">
         
-        <!-- KHU VỰC CHIẾN ĐẤU VỚI RỒNG VÀ GÓC NHÂN VẬT 3D CÓ ANIMATION -->
         <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[300px] justify-center">
             <div class="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/20 to-transparent pointer-events-none"></div>
             
-            <!-- Khung 3D nhân vật thu nhỏ ở góc trái khi chơi (Nền trắng hơi xám xanh) -->
             <div id="mini-avatar-wrapper" class="absolute top-3 left-3 w-28 h-32 bg-[#edf2f7] border-2 border-green-500/80 rounded-xl overflow-hidden shadow-2xl z-30 flex flex-col items-center transition-all duration-300">
                 <div id="game-avatar-container" class="w-full h-24"></div>
                 <div class="w-full bg-gray-900 text-[9px] text-green-300 text-center font-bold py-0.5 truncate px-1" id="mini-player-name">Chiến Binh</div>
             </div>
 
-            <!-- Khung chứa ảnh rồng có cơ chế dự phòng nếu không tìm thấy file ảnh -->
             <div class="dragon-img-container w-full h-64 sm:h-72 rounded-2xl border-2 border-red-500/60 shadow-[0_0_35px_rgba(239,68,68,0.8)] relative overflow-hidden flex items-center justify-center bg-black">
                 <img src="Hinh_nen_rong_vang_3d_1_aba0e2f825.jpg" alt="Hỏa Long Vương" class="w-full h-full object-cover filter contrast-110" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop';">
                 
@@ -207,7 +204,7 @@
 
             <div class="w-full flex justify-between items-center mb-1 px-1 z-10">
                 <span class="text-xs font-bold text-gray-300">HP BOSS:</span>
-                <span id="boss-hp-text" class="game-font font-bold text-sm text-red-400">10,000 / 10,000 HP</span>
+                <span id="boss-hp-text" class="game-font font-bold text-sm text-red-400">7,500 / 7,500 HP</span>
             </div>
             <div class="w-full bg-gray-900 h-6 rounded-full overflow-hidden p-1 border border-red-900/60 shadow-inner z-10">
                 <div id="boss-hp-bar" class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
@@ -255,7 +252,6 @@
             </div>
         </div>
 
-        <!-- BẢNG XẾP HẠNG / THÔNG TIN TOP CỦA NGƯỜI CHƠI (HOẶC ĐẦY ĐỦ CHO ADMIN) -->
         <div class="card-bg p-4 rounded-2xl shadow-xl">
             <h4 id="leaderboard-title" class="game-font text-xs text-yellow-400 font-bold uppercase mb-2">🏆 Thông Tin Xếp Hạng</h4>
             <div id="leaderboard" class="space-y-1 text-sm"></div>
@@ -267,10 +263,8 @@
         <h2 id="end-title" class="game-font text-3xl font-bold mb-2">CHIẾN THẮNG!</h2>
         <p id="end-subtitle" class="text-gray-300 mb-6 text-base">Trận đại chiến đã khép lại. Dưới đây là bảng vinh danh các chiến binh:</p>
         
-        <!-- BỤC VINH DANH TOP 1, 2, 3 (Đã thay đổi lấy tên người đạt top, nằm trong khung nổi bật và chữ nổi trên đó) -->
         <div id="podium-container" class="grid grid-cols-3 gap-3 mb-6 items-end justify-center px-4"></div>
 
-        <!-- DANH SÁCH TỪ RANK 4 TRỞ XUỐNG -->
         <div class="bg-gray-900/80 p-4 rounded-xl mb-6 text-left max-h-56 overflow-y-auto border border-gray-800">
             <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3">🏅 Danh Sách Các Chiến Binh Khác (Từ Hạng 4)</h4>
             <div id="final-leaderboard" class="space-y-2 text-sm"></div>
@@ -310,7 +304,6 @@
             weapon: 'katana'
         };
 
-        // --- HỆ THỐNG ÂM THANH & NHẠC NỀN KỊCH TÍNH, SÔI ĐỘNG HƠN ---
         let audioCtx = null;
         let isAudioMuted = false;
         let bgmInterval = null;
@@ -343,7 +336,6 @@
             playClickSound();
         }
 
-        // Nhạc nền Boss Battle kịch tính, dồn dập & sôi động hơn (Tempo nhanh hơn 180ms)
         function startBGM() {
             if (isAudioMuted || bgmInterval) return;
             const ctx = getAudioContext();
@@ -356,7 +348,6 @@
                 try {
                     const now = ctx.currentTime;
                     
-                    // Bass dồn dập
                     const oscBass = ctx.createOscillator();
                     const gainBass = ctx.createGain();
                     oscBass.type = 'sawtooth';
@@ -376,7 +367,6 @@
                     oscBass.start(now);
                     oscBass.stop(now + 0.22);
 
-                    // Melody sắc bén
                     const oscLead = ctx.createOscillator();
                     const gainLead = ctx.createGain();
                     oscLead.type = 'square';
@@ -529,7 +519,6 @@
             } catch(e) { console.log(e); }
         }
 
-        // --- QUẢN LÝ THREE.JS 3D AVATAR ---
         let loginScene, loginCamera, loginRenderer, loginAvatarGroup;
         let lobbyScene, lobbyCamera, lobbyRenderer, lobbyAvatarGroup;
         let gameScene, gameCamera, gameRenderer, gameAvatarGroup;
@@ -740,7 +729,6 @@
             if (gameRenderer && gameScene && gameCamera) gameRenderer.render(gameScene, gameCamera);
         }
 
-        // --- HỆ THỐNG GAME & CÂU HỎI ---
         const questions = [
             { q: "Hợp chất nào sau đây làm quỳ tím hóa đỏ?", answers: ["NaOH", "HCl", "NaCl", "NH3"], correct: 1 },
             { q: "Kim loại nào dẫn điện tốt nhất trong bảng tuần hoàn?", answers: ["Đồng (Cu)", "Nhôm (Al)", "Bạc (Ag)", "Vàng (Au)"], correct: 2 },
@@ -769,7 +757,8 @@
         let timerInterval = null;
         let selectedAnswerIndex = null; 
         let isRevealed = false; 
-        let totalActivePlayers = 0; 
+        let totalActivePlayers = 1; 
+        let dynamicMaxHP = 7500;
 
         window.onload = function() {
             init3DAvatarSystem();
@@ -839,8 +828,12 @@
         function setupListeners() {
             db.ref('room/players').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
-                totalActivePlayers = Object.keys(players).length;
+                totalActivePlayers = Math.max(1, Object.keys(players).length);
                 document.getElementById('player-count').innerText = totalActivePlayers;
+                
+                // Máu boss tính tự động: 1 người 7500, 10 người 75k, 100 người 750k...
+                dynamicMaxHP = totalActivePlayers * 7500;
+                document.getElementById('preview-boss-hp').innerText = dynamicMaxHP.toLocaleString();
             });
 
             if (isAdmin) {
@@ -880,6 +873,8 @@
 
         function adminStartGame() {
             playClickSound();
+            dynamicMaxHP = totalActivePlayers * 7500;
+
             db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
                 const offset = offsetSnap.val() || 0;
                 const serverNow = Date.now() + offset;
@@ -890,7 +885,8 @@
                     revealed: false,
                     startTime: serverNow 
                 });
-                db.ref('room/bossHP').set(10000);
+                db.ref('room/bossMaxHP').set(dynamicMaxHP);
+                db.ref('room/bossHP').set(dynamicMaxHP);
                 db.ref('room/answersCount').set([0, 0, 0, 0]);
                 db.ref('room/playerChoices').remove();
             });
@@ -1069,7 +1065,7 @@
                     const dmgText = document.createElement('div');
                     dmgText.className = "absolute text-green-400 font-bold text-2xl game-font z-45 animate-bounce";
                     dmgText.style.top = "35%";
-                    dmgText.innerText = "CHÍ MẠNG! -500 DPS!";
+                    dmgText.innerText = "CHÍ MẠNG & BUFF SÁT THƯƠNG!";
                     container.appendChild(dmgText);
                     setTimeout(() => dmgText.remove(), 900);
                 }, 350);
@@ -1090,7 +1086,7 @@
                     const dmgText = document.createElement('div');
                     dmgText.className = "absolute text-red-200 bg-red-950/95 border-2 border-red-500 px-4 py-2 rounded-xl font-bold text-lg game-font z-50 animate-pulse shadow-2xl";
                     dmgText.style.top = "35%";
-                    dmgText.innerText = "🔥 HỎA LONG PHUN LỬA! -200 DPS!";
+                    dmgText.innerText = "🔥 HỎA LONG PHUN LỬA! KÍCH HOẠT BUFF CHO ĐỒNG ĐỘI!";
                     container.appendChild(dmgText);
                     setTimeout(() => dmgText.remove(), 1200);
                 }, 200);
@@ -1118,28 +1114,47 @@
                     }
                 }
 
-                if (selectedAnswerIndex === correctIdx) {
-                    playAttackAnimation(true);
-                    const damage = 500; 
-                    myDps += damage;
-                    myCorrectCount += 1;
-                    localStorage.setItem('boss_player_dps', myDps);
-                    localStorage.setItem('boss_player_correct', myCorrectCount);
-                    document.getElementById('my-dps').innerText = myDps;
+                // Kiểm tra xem cá nhân đúng hay sai và tính sát thương linh hoạt theo số người sai để chia đều
+                db.ref('room/playerChoices').once('value', (snapshot) => {
+                    const allChoices = snapshot.val() || {};
+                    let totalWrongCount = 0;
+                    let totalCorrectCount = 0;
 
-                    db.ref('room/bossHP').transaction((currentHP) => {
-                        if (currentHP === null) return 10000 - damage;
-                        return Math.max(0, currentHP - damage);
+                    Object.values(allChoices).forEach(choice => {
+                        if (choice === correctIdx) totalCorrectCount++;
+                        else totalWrongCount++;
                     });
+                    if (totalCorrectCount === 0) totalCorrectCount = 1;
 
-                    db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
-                } else {
-                    playAttackAnimation(false);
-                    myDps = Math.max(0, myDps - 200); 
-                    localStorage.setItem('boss_player_dps', myDps);
-                    document.getElementById('my-dps').innerText = myDps;
-                    db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
-                }
+                    // Cơ chế: Mỗi người sai sẽ tạo ra phần thưởng sát thương bổ sung cộng dồn cho mỗi người đúng chia đều
+                    let baseDamagePerPerson = 500;
+                    let extraBuffDamage = totalWrongCount * 150; 
+                    let totalDamageForThisCorrectPerson = baseDamagePerPerson + Math.floor(extraBuffDamage / totalCorrectCount);
+
+                    if (selectedAnswerIndex === correctIdx) {
+                        playAttackAnimation(true);
+                        myDps += totalDamageForThisCorrectPerson;
+                        myCorrectCount += 1;
+                        localStorage.setItem('boss_player_dps', myDps);
+                        localStorage.setItem('boss_player_correct', myCorrectCount);
+                        document.getElementById('my-dps').innerText = myDps;
+
+                        db.ref('room/bossHP').transaction((currentHP) => {
+                            if (currentHP === null) return 0;
+                            return Math.max(0, currentHP - totalDamageForThisCorrectPerson);
+                        });
+
+                        db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
+                    } else {
+                        playAttackAnimation(false);
+                        // Người trả lời sai không bị trừ điểm gốc quá sâu, đảm bảo cân bằng game
+                        myDps = Math.max(0, myDps - 100); 
+                        localStorage.setItem('boss_player_dps', myDps);
+                        document.getElementById('my-dps').innerText = myDps;
+                        db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
+                    }
+                });
+
             } else {
                 const buttons = document.getElementById('answers-container').children;
                 for (let i = 0; i < buttons.length; i++) {
@@ -1174,23 +1189,27 @@
 
         function listenBossHP() {
             const hpRef = db.ref('room/bossHP');
-            hpRef.on('value', (snapshot) => {
-                let hp = snapshot.val();
-                if (hp === null) {
-                    hp = 10000;
-                    if (isAdmin) hpRef.set(10000);
-                }
-                const percent = (hp / 10000) * 100;
-                document.getElementById('boss-hp-bar').style.width = percent + '%';
-                document.getElementById('boss-hp-text').innerText = `${hp.toLocaleString()} / 10,000 HP`;
+            const maxHpRef = db.ref('room/bossMaxHP');
 
-                if (hp <= 0 && isAdmin) {
-                    db.ref('room/gameState').update({ status: 'ended' });
-                }
+            maxHpRef.on('value', (maxSnap) => {
+                let maxHp = maxSnap.val() || 7500;
+                hpRef.on('value', (snapshot) => {
+                    let hp = snapshot.val();
+                    if (hp === null) {
+                        hp = maxHp;
+                        if (isAdmin) hpRef.set(maxHp);
+                    }
+                    const percent = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+                    document.getElementById('boss-hp-bar').style.width = percent + '%';
+                    document.getElementById('boss-hp-text').innerText = `${Math.round(hp).toLocaleString()} / ${maxHp.toLocaleString()} HP`;
+
+                    if (hp <= 0 && isAdmin) {
+                        db.ref('room/gameState').update({ status: 'ended' });
+                    }
+                });
             });
         }
 
-        // --- XỬ LÝ LẮNG NGHE & HIỂN THỊ XẾP HẠNG (PHÂN BIỆT ADMIN & NGƯỜI CHƠI) ---
         function listenLeaderboard() {
             db.ref('room/players').orderByChild('dps').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
@@ -1200,7 +1219,6 @@
                 lbContainer.innerHTML = '';
 
                 if (isAdmin) {
-                    // Admin thấy chi tiết top
                     sorted.forEach((p, index) => {
                         const row = document.createElement('div');
                         row.className = "flex justify-between items-center bg-gray-900/40 px-3 py-1.5 rounded-lg";
@@ -1208,15 +1226,12 @@
                         lbContainer.appendChild(row);
                     });
                 } else {
-                    // Người chơi chỉ thấy thứ hạng thuộc khoảng top (Top 10, Top 20, Top 30,...) và max điểm trong top đó
                     let myRank = sorted.findIndex(p => p.name === myName) + 1;
                     if (myRank === 0) myRank = sorted.length + 1;
 
-                    // Tính mốc top (làm tròn lên hàng chục: 1-10 -> Top 10, 11-20 -> Top 20,...)
                     let topTier = Math.ceil(myRank / 10) * 10;
                     if (topTier < 10) topTier = 10;
 
-                    // Lấy điểm cao nhất trong top tier đó (hoặc trong toàn bộ nhóm)
                     let tierPlayers = sorted.slice(0, topTier);
                     let maxScoreInTier = tierPlayers.length > 0 ? tierPlayers[0].dps : myDps;
 
@@ -1231,7 +1246,6 @@
             });
         }
 
-        // --- MÀN HÌNH KẾT THÚC & VINH DANH ---
         function endGame(isVictory) {
             if (timerInterval) clearInterval(timerInterval);
             stopBGM();
@@ -1260,7 +1274,6 @@
                 podiumContainer.innerHTML = '';
                 finalLb.innerHTML = '';
 
-                // Sắp xếp bục vinh danh Top 2 (trái), Top 1 (giữa, cao hơn), Top 3 (phải)
                 let podiumOrder = [
                     { rank: 2, data: sorted[1], color: 'from-gray-400 to-gray-600', height: 'h-36', crown: '🥈' },
                     { rank: 1, data: sorted[0], color: 'from-yellow-400 to-yellow-600', height: 'h-44', crown: '👑 🥇' },
@@ -1271,7 +1284,6 @@
                     if (item.data) {
                         const pCard = document.createElement('div');
                         pCard.className = `flex flex-col items-center justify-end bg-gradient-to-t ${item.color} rounded-xl p-3 shadow-lg border border-white/20 ${item.height}`;
-                        // Cập nhật: Thay vì nhân vật 3D, hiển thị tên người đạt top bên trong một khung nổi bật, chữ nổi rõ ràng
                         pCard.innerHTML = `
                             <span class="text-xl mb-1">${item.crown}</span>
                             <div class="w-full bg-black/60 border border-yellow-400/80 rounded-lg py-1.5 px-1 mb-1 shadow-md">
@@ -1287,7 +1299,6 @@
                     }
                 });
 
-                // Từ rank 4 trở xuống xếp thành hàng dài đầy đủ
                 if (sorted.length > 3) {
                     for (let i = 3; i < sorted.length; i++) {
                         const p = sorted[i];
