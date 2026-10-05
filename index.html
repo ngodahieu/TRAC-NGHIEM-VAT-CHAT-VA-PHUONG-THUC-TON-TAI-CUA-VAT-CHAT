@@ -80,10 +80,10 @@
         <p class="text-gray-300 mb-4 text-sm">Thiết kế chiến binh 3D nâng cấp của bạn trước khi bước vào đại chiến!</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-            <!-- Khu vực hiển thị khung 3D tùy chỉnh nhân vật -->
-            <div class="relative w-full h-72 bg-gray-950 rounded-xl border border-red-500/40 overflow-hidden shadow-inner flex items-center justify-center">
+            <!-- Khu vực hiển thị khung 3D tùy chỉnh nhân vật (nền trắng hơi xám xanh) -->
+            <div class="relative w-full h-72 bg-[#edf2f7] rounded-xl border border-red-500/40 overflow-hidden shadow-inner flex items-center justify-center">
                 <div id="avatar-canvas-container" class="w-full h-full cursor-grab"></div>
-                <div class="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-yellow-400 font-bold">Xoay để xem 360°</div>
+                <div class="absolute bottom-2 left-2 bg-gray-900/80 px-2 py-1 rounded text-[10px] text-yellow-400 font-bold">Xoay để xem 360°</div>
             </div>
 
             <!-- Bảng tùy chỉnh ngoại hình 3D -->
@@ -159,7 +159,8 @@
     <!-- MÀN HÌNH CHỜ (LOBBY) -->
     <div id="lobby-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-xl text-center hidden">
         <div class="flex justify-center mb-4">
-            <div id="lobby-avatar-container" class="w-36 h-36 bg-gray-950 rounded-2xl border border-yellow-500/50 overflow-hidden shadow-lg"></div>
+            <!-- Khung avatar lobby đổi sang nền trắng hơi xám xanh -->
+            <div id="lobby-avatar-container" class="w-36 h-36 bg-[#edf2f7] rounded-2xl border border-yellow-500/50 overflow-hidden shadow-lg"></div>
         </div>
         <h2 class="game-font text-2xl font-bold text-yellow-400 mb-1">PHÒNG CHỜ CHIẾN BINH</h2>
         <p class="text-gray-300 mb-4 text-sm">Đang đợi các đồng đội tham gia trận đại chiến...</p>
@@ -180,10 +181,10 @@
         <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[300px] justify-center">
             <div class="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/20 to-transparent pointer-events-none"></div>
             
-            <!-- Khung 3D nhân vật thu nhỏ ở góc trái khi chơi -->
-            <div id="mini-avatar-wrapper" class="absolute top-3 left-3 w-28 h-32 bg-black/90 border-2 border-green-500/80 rounded-xl overflow-hidden shadow-2xl z-30 flex flex-col items-center transition-all duration-300">
+            <!-- Khung 3D nhân vật thu nhỏ ở góc trái khi chơi (Nền trắng hơi xám xanh) -->
+            <div id="mini-avatar-wrapper" class="absolute top-3 left-3 w-28 h-32 bg-[#edf2f7] border-2 border-green-500/80 rounded-xl overflow-hidden shadow-2xl z-30 flex flex-col items-center transition-all duration-300">
                 <div id="game-avatar-container" class="w-full h-24"></div>
-                <div class="w-full bg-green-950 text-[9px] text-green-300 text-center font-bold py-0.5 truncate px-1" id="mini-player-name">Chiến Binh</div>
+                <div class="w-full bg-gray-900 text-[9px] text-green-300 text-center font-bold py-0.5 truncate px-1" id="mini-player-name">Chiến Binh</div>
             </div>
 
             <!-- Khung chứa ảnh rồng có cơ chế dự phòng nếu không tìm thấy file ảnh -->
@@ -266,7 +267,7 @@
         <h2 id="end-title" class="game-font text-3xl font-bold mb-2">CHIẾN THẮNG!</h2>
         <p id="end-subtitle" class="text-gray-300 mb-6 text-base">Trận đại chiến đã khép lại. Dưới đây là bảng vinh danh các chiến binh:</p>
         
-        <!-- BỤC VINH DANH TOP 1, 2, 3 -->
+        <!-- BỤC VINH DANH TOP 1, 2, 3 (Đã thay đổi lấy tên người đạt top, nằm trong khung nổi bật và chữ nổi trên đó) -->
         <div id="podium-container" class="grid grid-cols-3 gap-3 mb-6 items-end justify-center px-4"></div>
 
         <!-- DANH SÁCH TỪ RANK 4 TRỞ XUỐNG -->
@@ -1270,9 +1271,12 @@
                     if (item.data) {
                         const pCard = document.createElement('div');
                         pCard.className = `flex flex-col items-center justify-end bg-gradient-to-t ${item.color} rounded-xl p-3 shadow-lg border border-white/20 ${item.height}`;
+                        // Cập nhật: Thay vì nhân vật 3D, hiển thị tên người đạt top bên trong một khung nổi bật, chữ nổi rõ ràng
                         pCard.innerHTML = `
                             <span class="text-xl mb-1">${item.crown}</span>
-                            <span class="font-bold text-xs text-white truncate w-full text-center">🛡️ ${item.data.name}</span>
+                            <div class="w-full bg-black/60 border border-yellow-400/80 rounded-lg py-1.5 px-1 mb-1 shadow-md">
+                                <span class="font-bold text-xs text-yellow-300 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] truncate block w-full">🛡️ ${item.data.name}</span>
+                            </div>
                             <span class="text-[11px] text-yellow-200 font-bold">${item.data.dps} DPS</span>
                             <span class="text-[10px] text-gray-100">${item.data.correct || 0}/15 đúng</span>
                         `;
