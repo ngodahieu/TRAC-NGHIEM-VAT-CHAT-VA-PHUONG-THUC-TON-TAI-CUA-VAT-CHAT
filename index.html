@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đấu Trùm Hút Máu - Boss Raid Quiz 3D/2D Animations</title>
+    <title>Đấu Trùm Hút Máu - Boss Raid Quiz 3D Dragon Animations</title>
     <!-- Tailwind CSS qua CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Orbitron & Quicksand -->
@@ -14,12 +14,33 @@
         .boss-glow { text-shadow: 0 0 25px rgba(239, 68, 68, 0.9); }
         .card-bg { background: rgba(17, 24, 39, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.12); }
         
-        /* Animation Boss & Hiệu ứng chiến đấu */
-        @keyframes bossFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(1deg); }
+        /* HIỆU ỨNG 3D DRAGON ANIMATIONS */
+        @keyframes dragonHover {
+            0%, 100% { transform: translateY(0px) rotateX(5deg) rotateY(-5deg); }
+            50% { transform: translateY(-12px) rotateX(-5deg) rotateY(5deg); }
         }
-        .boss-animated { animation: bossFloat 4s ease-in-out infinite; }
+        .dragon-3d-container {
+            perspective: 1000px;
+            animation: dragonHover 4s ease-in-out infinite;
+        }
+
+        @keyframes wingFlapLeft {
+            0%, 100% { transform: rotateZ(0deg) rotateY(0deg); }
+            50% { transform: rotateZ(-15deg) rotateY(-25deg); }
+        }
+        @keyframes wingFlapRight {
+            0%, 100% { transform: rotateZ(0deg) rotateY(0deg); }
+            50% { transform: rotateZ(15deg) rotateY(25deg); }
+        }
+        .wing-left { animation: wingFlapLeft 1.5s ease-in-out infinite; transform-origin: right center; }
+        .wing-right { animation: wingFlapRight 1.5s ease-in-out infinite; transform-origin: left center; }
+
+        @keyframes fireBreathAnim {
+            0% { transform: scale(0.2) translateY(0); opacity: 0; }
+            50% { opacity: 0.9; }
+            100% { transform: scale(1.4) translateY(90px); opacity: 0; }
+        }
+        .anim-dragon-fire { animation: fireBreathAnim 0.8s ease-out infinite; }
 
         @keyframes attackSlash {
             0% { transform: scale(0.3) translate(-50px, 100px); opacity: 0; }
@@ -27,13 +48,6 @@
             100% { transform: scale(1.2) translate(0px, -80px); opacity: 0; }
         }
         .anim-slash { animation: attackSlash 0.6s ease-out forwards; }
-
-        @keyframes bossShoot {
-            0% { transform: scale(0.2) translate(0px, -100px); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: scale(1) translate(0px, 120px); opacity: 0; }
-        }
-        .anim-boss-fire { animation: bossShoot 0.5s ease-in forwards; }
 
         @keyframes screenShake {
             0% { transform: translate(0, 0); }
@@ -51,7 +65,7 @@
     <!-- MÀN HÌNH ĐĂNG NHẬP & CHỌN TRANG PHỤC -->
     <div id="login-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-md text-center">
         <h1 class="game-font text-3xl font-black text-red-500 mb-2 boss-glow">ĐẤU TRÙM HÚT MÁU</h1>
-        <p class="text-gray-400 mb-6 text-sm">Hợp sức hạ gục Hỏa Long Vương - Tranh đoạt Top DPS!</p>
+        <p class="text-gray-400 mb-6 text-sm">Hợp sức hạ gục Hỏa Long Vương 3D - Tranh đoạt Top DPS!</p>
         
         <input type="text" id="player-name" placeholder="Nhập biệt danh của bạn..." maxlength="15" 
             class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl mb-4 text-center text-lg focus:outline-none focus:border-red-500 font-bold">
@@ -100,20 +114,58 @@
     <!-- MÀN HÌNH GAME CHÍNH -->
     <div id="game-screen" class="w-full max-w-3xl hidden">
         
-        <!-- KHU VỰC HIỂN THỊ BOSS 2D/3D & HIỆU ỨNG ANIMATION -->
-        <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[220px] justify-center">
-            <div class="absolute inset-0 bg-gradient-to-b from-red-950/40 to-transparent pointer-events-none"></div>
+        <!-- KHU VỰC HIỂN THỊ MÔ HÌNH RỒNG 3D & ANIMATION -->
+        <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[260px] justify-center">
+            <div class="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/20 to-transparent pointer-events-none"></div>
             
-            <!-- Vùng chứa Boss động -->
-            <div class="boss-animated relative flex flex-col items-center z-10 my-2">
-                <div class="w-28 h-28 rounded-2xl bg-gradient-to-tr from-red-950 via-red-700 to-orange-600 flex items-center justify-center border-4 border-red-500 shadow-2xl relative">
-                    <span id="boss-icon" class="text-6xl select-none filter drop-shadow-[0_0_15px_rgba(255,100,0,0.8)]">🐲</span>
-                    <div class="absolute inset-0 rounded-2xl border border-yellow-400/30 animate-ping pointer-events-none"></div>
-                </div>
+            <!-- Vùng chứa Rồng 3D SVG/CSS Chân Thực -->
+            <div class="dragon-3d-container relative flex flex-col items-center z-10 my-1">
+                <svg class="w-40 h-40 filter drop-shadow-[0_0_20px_rgba(255,69,0,0.8)] select-none" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Thân rồng & Đuôi uốn lượn -->
+                    <path d="M100 140C70 140 50 110 60 80C70 50 90 40 100 30C110 40 130 50 140 80C150 110 130 140 100 140Z" fill="url(#bodyGradient)" stroke="#f97316" stroke-width="2"/>
+                    <path d="M100 130C85 150 70 170 50 175C70 180 90 160 100 130Z" fill="#b91c1c"/>
+                    
+                    <!-- Cánh Trái (Động) -->
+                    <g class="wing-left">
+                        <path d="M75 75C40 50 20 70 10 100C30 100 50 90 75 75Z" fill="#ef4444" stroke="#fef08a" stroke-width="1.5" opacity="0.9"/>
+                    </g>
+                    <!-- Cánh Phải (Động) -->
+                    <g class="wing-right">
+                        <path d="M125 75C160 50 180 70 190 100C170 100 150 90 125 75Z" fill="#ef4444" stroke="#fef08a" stroke-width="1.5" opacity="0.9"/>
+                    </g>
+
+                    <!-- Đầu Rồng 3D -->
+                    <circle cx="100" cy="55" r="25" fill="url(#headGradient)" stroke="#fbbf24" stroke-width="2"/>
+                    <!-- Sừng Rồng -->
+                    <path d="M85 40L70 20L90 35Z" fill="#fbbf24"/>
+                    <path d="M115 40L130 20L110 35Z" fill="#fbbf24"/>
+                    <!-- Mắt phát sáng dữ tợn -->
+                    <ellipse cx="90" cy="50" rx="4" ry="2.5" fill="#fef08a" class="animate-pulse"/>
+                    <ellipse cx="110" cy="50" rx="4" ry="2.5" fill="#fef08a" class="animate-pulse"/>
+                    <!-- Miệng rồng (nơi phun lửa) -->
+                    <path d="M92 65C96 70 104 70 108 65" stroke="#7f1d1d" stroke-width="3" stroke-linecap="round"/>
+
+                    <!-- Định nghĩa màu gradient 3D -->
+                    <defs>
+                        <radialGradient id="bodyGradient" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#f97316" />
+                            <stop offset="60%" stop-color="#dc2626" />
+                            <stop offset="100%" stop-color="#7f1d1d" />
+                        </radialGradient>
+                        <radialGradient id="headGradient" cx="50%" cy="40%" r="60%">
+                            <stop offset="0%" stop-color="#fb923c" />
+                            <stop offset="70%" stop-color="#b91c1c" />
+                            <stop offset="100%" stop-color="#450a0a" />
+                        </radialGradient>
+                    </defs>
+                </svg>
+
+                <!-- Hiệu ứng lửa phun trực tiếp từ miệng rồng -->
+                <div class="absolute top-28 w-12 h-16 bg-gradient-to-t from-transparent via-orange-500 to-yellow-300 rounded-full blur-sm anim-dragon-fire pointer-events-none"></div>
             </div>
             
             <!-- Tên Boss & Trạng thái -->
-            <h2 class="game-font text-lg font-black text-red-500 boss-glow tracking-wider z-10">HỎA LONG VƯƠNG</h2>
+            <h2 class="game-font text-lg font-black text-red-500 boss-glow tracking-wider z-10 mt-1">HỎA LONG VƯƠNG 3D</h2>
             <p id="role-notice" class="text-xs text-yellow-400 font-bold mb-3 z-10">⚡ Chế độ: Người chơi tham gia chiến đấu</p>
 
             <!-- Container hiệu ứng skill -->
@@ -146,7 +198,7 @@
             </div>
             
             <div id="admin-controls" class="mt-6 hidden">
-                <!-- KHU VỰC THỐNG KÊ SỐ NGƯỜI CHỌN ĐÁP ÁN DÀNH CHO ADMIN (NẰM NGAY TRÊN NÚT ĐIỀU KHIỂN) -->
+                <!-- KHU VỰC THỐNG KÊ SỐ NGƯỜI CHỌN ĐÁP ÁN DÀNH CHO ADMIN -->
                 <div class="bg-gray-900/80 p-3 rounded-xl mb-3 border border-gray-800 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono">
                     <div class="bg-gray-800/80 p-2 rounded-lg text-center border border-gray-700">
                         <span class="text-red-400 font-bold">ĐA A:</span> <span id="stat-count-0" class="text-yellow-400 font-bold">0/0</span>
@@ -162,7 +214,7 @@
                     </div>
                 </div>
 
-                <!-- KHU VỰC NÚT ĐIỀU KHIỂN & TỔNG SỐ NGƯỜI CHƠI ĐÃ CHỌN BÊN PHẢI -->
+                <!-- KHU VỰC NÚT ĐIỀU KHIỂN & TỔNG SỐ NGƯỜI CHƠI ĐÃ CHỌN -->
                 <div class="flex flex-col sm:flex-row items-center gap-3">
                     <button onclick="adminShowAnswerAndNext()" class="flex-1 w-full py-3 bg-yellow-600 hover:bg-yellow-500 text-gray-950 game-font font-black rounded-xl shadow-lg transition">
                         👑 HIỆN ĐÁP ÁN & CHUYỂN CÂU TIẾP THEO (ADMIN)
@@ -358,7 +410,6 @@
                             }
                         }
                         
-                        // Chỉ trigger reveal khi trạng thái revealed thực sự là true
                         if (state.revealed && !isRevealed && currentQuestionIndex === state.questionIndex) {
                             triggerRevealState();
                         }
@@ -443,7 +494,6 @@
 
             if (timerInterval) clearInterval(timerInterval);
 
-            // Đảm bảo reset trạng thái ngay khi load câu hỏi mới
             selectedAnswerIndex = null;
             isRevealed = false;
             
@@ -631,7 +681,6 @@
                             const offset = offsetSnap.val() || 0;
                             const serverNow = Date.now() + offset;
 
-                            // Cập nhật revealed: false đồng thời với questionIndex để tránh lỗi xung đột trạng thái cũ
                             db.ref('room/answersCount').set([0, 0, 0, 0]);
                             db.ref('room/playerChoices').remove();
                             db.ref('room/gameState').update({ 
@@ -708,7 +757,7 @@
                 const finalLb = document.getElementById('final-leaderboard');
                 finalLb.innerHTML = '';
 
-                    sorted.forEach((p, index) => {
+                sorted.forEach((p, index) => {
                     const rankColor = index === 0 ? 'text-yellow-400 font-black text-base' : index === 1 ? 'text-gray-300 font-bold' : index === 2 ? 'text-amber-600 font-bold' : 'text-gray-400';
                     const skinIcon = skinData[p.skin] ? skinData[p.skin].icon : '⚔️';
                     const row = document.createElement('div');
