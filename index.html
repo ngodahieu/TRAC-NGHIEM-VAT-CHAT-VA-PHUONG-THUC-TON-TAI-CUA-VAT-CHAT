@@ -3,33 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đấu Trùm Hút Máu - Boss Raid Quiz</title>
+    <title>Đấu Trùm Hút Máu - Boss Raid Quiz 3D/2D Animations</title>
     <!-- Tailwind CSS qua CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Orbitron cho phong cách game gaming -->
+    <!-- Google Fonts: Orbitron & Quicksand -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Quicksand', sans-serif; background-color: #0b0f19; color: #f3f4f6; }
+        body { font-family: 'Quicksand', sans-serif; background-color: #0b0f19; color: #f3f4f6; overflow-x: hidden; }
         .game-font { font-family: 'Orbitron', sans-serif; }
         .boss-glow { text-shadow: 0 0 25px rgba(239, 68, 68, 0.9); }
         .card-bg { background: rgba(17, 24, 39, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.12); }
-        @keyframes pulse-boss {
-            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6)); }
-            50% { transform: scale(1.03); filter: drop-shadow(0 0 30px rgba(239, 68, 68, 0.9)); }
+        
+        /* Animation Boss & Hiệu ứng chiến đấu */
+        @keyframes bossFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
         }
-        .boss-avatar { animation: pulse-boss 3s infinite ease-in-out; }
+        .boss-animated { animation: bossFloat 4s ease-in-out infinite; }
+
+        @keyframes attackSlash {
+            0% { transform: scale(0.3) translate(-50px, 100px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1.2) translate(0px, -80px); opacity: 0; }
+        }
+        .anim-slash { animation: attackSlash 0.6s ease-out forwards; }
+
+        @keyframes bossShoot {
+            0% { transform: scale(0.2) translate(0px, -100px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1) translate(0px, 120px); opacity: 0; }
+        }
+        .anim-boss-fire { animation: bossShoot 0.5s ease-in forwards; }
+
+        @keyframes screenShake {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-8px, 8px); }
+            40% { transform: translate(8px, -8px); }
+            60% { transform: translate(-5px, 5px); }
+            80% { transform: translate(5px, -5px); }
+            100% { transform: translate(0, 0); }
+        }
+        .shake { animation: screenShake 0.4s ease-in-out; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <!-- MÀN HÌNH ĐĂNG NHẬP -->
+    <!-- MÀN HÌNH ĐĂNG NHẬP & CHỌN TRANG PHỤC -->
     <div id="login-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-md text-center">
         <h1 class="game-font text-3xl font-black text-red-500 mb-2 boss-glow">ĐẤU TRÙM HÚT MÁU</h1>
-        <p class="text-gray-400 mb-6 text-sm">Hợp sức đồng đội hạ gục Boss - Tranh đoạt Top DPS!</p>
+        <p class="text-gray-400 mb-6 text-sm">Hợp sức hạ gục Hỏa Long Vương - Tranh đoạt Top DPS!</p>
+        
         <input type="text" id="player-name" placeholder="Nhập biệt danh của bạn..." maxlength="15" 
             class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl mb-4 text-center text-lg focus:outline-none focus:border-red-500 font-bold">
+        
+        <!-- Lựa chọn Trang phục / Hệ chiến binh -->
+        <div class="mb-4 text-left">
+            <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Chọn Trang Phục Chiến Binh:</label>
+            <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="selectSkin('knight', this)" class="skin-btn p-3 rounded-xl border border-red-500 bg-red-950/40 text-center transition cursor-pointer">
+                    <div class="text-2xl mb-1">⚔️</div>
+                    <div class="text-xs font-bold text-red-400">Kiếm Sĩ</div>
+                </button>
+                <button type="button" onclick="selectSkin('mage', this)" class="skin-btn p-3 rounded-xl border border-gray-700 bg-gray-900 text-center transition cursor-pointer">
+                    <div class="text-2xl mb-1">🔮</div>
+                    <div class="text-xs font-bold text-gray-400">Pháp Sư</div>
+                </button>
+                <button type="button" onclick="selectSkin('archer', this)" class="skin-btn p-3 rounded-xl border border-gray-700 bg-gray-900 text-center transition cursor-pointer">
+                    <div class="text-2xl mb-1">🏹</div>
+                    <div class="text-xs font-bold text-gray-400">Xạ Thủ</div>
+                </button>
+            </div>
+        </div>
+
         <input type="password" id="admin-pass" placeholder="Mật khẩu Admin (Để trống nếu là người chơi)" 
             class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl mb-6 text-center text-sm focus:outline-none focus:border-yellow-500 text-yellow-400">
+        
         <button onclick="joinGame()" class="w-full py-3 bg-red-600 hover:bg-red-700 game-font font-bold rounded-xl transition transform active:scale-95 shadow-lg shadow-red-600/30">
             VÀO PHÒNG CHỜ
         </button>
@@ -38,12 +86,11 @@
     <!-- MÀN HÌNH CHỜ (LOBBY) -->
     <div id="lobby-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-xl text-center hidden">
         <h2 class="game-font text-2xl font-bold text-yellow-400 mb-2">PHÒNG CHỜ CHIẾN BINH</h2>
-        <p class="text-gray-400 mb-6">Đang đợi các chiến binh khác tham gia trận đại chiến...</p>
+        <p class="text-gray-400 mb-6">Đang đợi các đồng đội tham gia trận đại chiến...</p>
         <div class="bg-gray-900/60 p-4 rounded-xl mb-6 border border-gray-800">
             <span class="text-sm text-gray-400">Số lượng người đang online:</span>
             <div id="player-count" class="game-font text-3xl font-bold text-green-400">1</div>
         </div>
-        <!-- Nút bắt đầu chỉ hiển thị với Admin -->
         <button id="admin-start-btn" onclick="adminStartGame()" class="w-full py-3 bg-gradient-to-r from-yellow-600 to-red-600 hover:from-yellow-500 hover:to-red-500 game-font font-bold rounded-xl transition shadow-lg shadow-yellow-600/30 hidden mb-3">
             👑 BẮT ĐẦU TRẬN ĐẤU (DÀNH CHO ADMIN)
         </button>
@@ -53,29 +100,40 @@
     <!-- MÀN HÌNH GAME CHÍNH -->
     <div id="game-screen" class="w-full max-w-3xl hidden">
         
-        <!-- KHU VỰC HIỂN THỊ BOSS -->
-        <div class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden">
-            <div class="absolute inset-0 bg-red-950/20 pointer-events-none"></div>
-            <div class="boss-avatar w-24 h-24 rounded-full bg-gradient-to-tr from-red-900 via-red-600 to-orange-500 flex items-center justify-center border-4 border-red-500 shadow-2xl mb-2">
-                <span class="text-4xl">🐲</span>
+        <!-- KHU VỰC HIỂN THỊ BOSS 2D/3D & HIỆU ỨNG ANIMATION -->
+        <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[220px] justify-center">
+            <div class="absolute inset-0 bg-gradient-to-b from-red-950/40 to-transparent pointer-events-none"></div>
+            
+            <!-- Vùng chứa Boss động (Canvas / SVG mô phỏng Boss 3D/2D) -->
+            <div class="boss-animated relative flex flex-col items-center z-10 my-2">
+                <div class="w-28 h-28 rounded-2xl bg-gradient-to-tr from-red-950 via-red-700 to-orange-600 flex items-center justify-center border-4 border-red-500 shadow-2xl relative">
+                    <span id="boss-icon" class="text-6xl select-none filter drop-shadow-[0_0_15px_rgba(255,100,0,0.8)]">🐲</span>
+                    <!-- Hiệu ứng vòng tròn năng lượng quanh Boss -->
+                    <div class="absolute inset-0 rounded-2xl border border-yellow-400/30 animate-ping pointer-events-none"></div>
+                </div>
             </div>
-            <h2 class="game-font text-lg font-black text-red-500 boss-glow tracking-wider">HỎA LONG VƯƠNG</h2>
-            <p id="role-notice" class="text-xs text-yellow-400 font-bold mb-3">⚡ Chế độ: Người chơi tham gia chiến đấu</p>
+            
+            <!-- Tên Boss & Trạng thái -->
+            <h2 class="game-font text-lg font-black text-red-500 boss-glow tracking-wider z-10">HỎA LONG VƯƠNG</h2>
+            <p id="role-notice" class="text-xs text-yellow-400 font-bold mb-3 z-10">⚡ Chế độ: Người chơi tham gia chiến đấu</p>
+
+            <!-- Container hiệu ứng skill bay qua lại giữa Player và Boss -->
+            <div id="skill-effects-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-20"></div>
 
             <!-- Thanh máu Boss -->
-            <div class="w-full flex justify-between items-center mb-1 px-1">
+            <div class="w-full flex justify-between items-center mb-1 px-1 z-10">
                 <span class="text-xs font-bold text-gray-400">HP BOSS:</span>
                 <span id="boss-hp-text" class="game-font font-bold text-sm text-red-400">10,000 / 10,000 HP</span>
             </div>
-            <div class="w-full bg-gray-900 h-6 rounded-full overflow-hidden p-1 border border-red-900/60 shadow-inner">
+            <div class="w-full bg-gray-900 h-6 rounded-full overflow-hidden p-1 border border-red-900/60 shadow-inner z-10">
                 <div id="boss-hp-bar" class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
             </div>
 
-            <!-- Thông số phụ trận đấu -->
-            <div class="w-full flex justify-between items-center mt-3 text-xs text-gray-400 px-1 border-t border-gray-800 pt-2">
+            <!-- Thông số phụ & Trang phục của bạn -->
+            <div class="w-full flex justify-between items-center mt-3 text-xs text-gray-400 px-1 border-t border-gray-800 pt-2 z-10">
                 <span>Câu hỏi: <span id="current-q-num" class="text-white font-bold">1</span>/15</span>
                 <span>Thời gian: <span id="timer" class="text-yellow-400 font-bold text-sm">12s</span></span>
-                <span id="my-dps-container">DPS Của Bạn: <span id="my-dps" class="text-green-400 font-bold">0</span></span>
+                <span id="my-dps-container">Trang phục: <span id="my-skin-display" class="text-yellow-400 font-bold">Kiếm Sĩ</span> | DPS: <span id="my-dps" class="text-green-400 font-bold">0</span></span>
             </div>
         </div>
 
@@ -85,10 +143,9 @@
                 Đang tải câu hỏi...
             </h3>
             <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Các nút đáp án sinh tự động bằng JS -->
+                <!-- Đáp án sinh tự động -->
             </div>
             
-            <!-- Nút điều khiển dành riêng cho Admin -->
             <div id="admin-controls" class="mt-6 hidden">
                 <button onclick="adminShowAnswerAndNext()" class="w-full py-3 bg-yellow-600 hover:bg-yellow-500 text-gray-950 game-font font-black rounded-xl shadow-lg transition">
                     👑 HIỆN ĐÁP ÁN & CHUYỂN CÂU TIẾP THEO (ADMIN)
@@ -110,7 +167,6 @@
         <h2 id="end-title" class="game-font text-3xl font-black mb-2">CHIẾN THẮNG!</h2>
         <p id="end-subtitle" class="text-gray-400 mb-6">Trận đại chiến đã khép lại. Dưới đây là bảng xếp hạng chung cuộc:</p>
         
-        <!-- Bảng xếp hạng toàn bộ người chơi -->
         <div class="bg-gray-900/80 p-4 rounded-xl mb-6 text-left max-h-64 overflow-y-auto border border-gray-800">
             <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3">🏅 Bảng Xếp Hạng Toàn Bộ Người Chơi</h4>
             <div id="final-leaderboard" class="space-y-2 text-sm">
@@ -144,6 +200,13 @@
 
         const ADMIN_SECRET = "admin123";
         let isAdmin = false;
+        let selectedSkin = localStorage.getItem('boss_player_skin') || 'knight';
+
+        const skinData = {
+            knight: { name: 'Kiếm Sĩ', icon: '⚔️', effectClass: 'anim-slash', skillIcon: '🗡️' },
+            mage: { name: 'Pháp Sư', icon: '🔮', effectClass: 'anim-slash', skillIcon: '✨' },
+            archer: { name: 'Xạ Thủ', icon: '🏹', effectClass: 'anim-slash', skillIcon: '🎯' }
+        };
 
         const questions = [
             { q: "Hợp chất nào sau đây làm quỳ tím hóa đỏ?", answers: ["NaOH", "HCl", "NaCl", "NH3"], correct: 1 },
@@ -175,16 +238,23 @@
         let totalActivePlayers = 0; 
         let questionTimeout = null;
 
-        // Tự động khôi phục phiên đăng nhập khi người dùng F5 (reload) lại trang
+        function selectSkin(skinKey, btnElement) {
+            selectedSkin = skinKey;
+            localStorage.setItem('boss_player_skin', skinKey);
+            document.querySelectorAll('.skin-btn').forEach(btn => {
+                btn.classList.remove('border-red-500', 'bg-red-950/40');
+                btn.classList.add('border-gray-700', 'bg-gray-900');
+            });
+            btnElement.classList.remove('border-gray-700', 'bg-gray-900');
+            btnElement.classList.add('border-red-500', 'bg-red-950/40');
+        }
+
         window.onload = function() {
             if (myName) {
                 document.getElementById('player-name').value = myName;
-                // Kiểm tra nếu trước đó đã vào phòng hoặc đang chơi thì tự động kết nối lại
                 db.ref('room/gameState').once('value', (snapshot) => {
                     const state = snapshot.val();
                     if (state && (state.status === 'playing' || state.status === 'ended')) {
-                        // Xác định xem trước đó có phải Admin không dựa trên mật khẩu lưu hoặc tự động hỏi, 
-                        // ở đây ta có thể lưu trạng thái isAdmin vào sessionStorage
                         if (sessionStorage.getItem('boss_is_admin') === 'true') {
                             isAdmin = true;
                         }
@@ -198,6 +268,12 @@
                     }
                 });
             }
+            // Khôi phục giao diện chọn skin cũ nếu có
+            document.querySelectorAll('.skin-btn').forEach(btn => {
+                if (btn.getAttribute('onclick').includes(selectedSkin)) {
+                    selectSkin(selectedSkin, btn);
+                }
+            });
         };
 
         function joinGame() {
@@ -223,13 +299,12 @@
 
             if (!isAdmin) {
                 const playerRef = db.ref('room/players/' + myPlayerId);
-                playerRef.update({ name: myName, dps: myDps });
+                playerRef.update({ name: myName, dps: myDps, skin: selectedSkin });
                 playerRef.onDisconnect().remove();
             }
 
             setupListeners();
             
-            // Kiểm tra nếu game đã bắt từ trước rồi thì nhảy thẳng vào game luôn
             db.ref('room/gameState').once('value', (snapshot) => {
                 const state = snapshot.val();
                 if (state && state.status === 'playing') {
@@ -254,7 +329,6 @@
                 const state = snapshot.val();
                 if (state) {
                     if (state.status === 'playing') {
-                        // Nếu đổi câu hỏi hoặc vừa reload lại trang trong lúc đang chơi
                         if (currentQuestionIndex !== state.questionIndex || document.getElementById('game-screen').classList.contains('hidden')) {
                             currentQuestionIndex = state.questionIndex || 0;
                             if (document.getElementById('game-screen').classList.contains('hidden')) {
@@ -282,7 +356,6 @@
         }
 
         function adminStartGame() {
-            // Lấy thời gian server chuẩn để đồng bộ tuyệt đối cho tất cả mọi người
             db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
                 const offset = offsetSnap.val() || 0;
                 const serverNow = Date.now() + offset;
@@ -307,15 +380,15 @@
 
             if (isAdmin) {
                 document.getElementById('role-notice').innerText = "👑 Chế độ: Admin (Người quan sát - Không chơi)";
-                document.getElementById('role-notice').className = "text-xs text-yellow-400 font-bold mb-3";
+                document.getElementById('role-notice').className = "text-xs text-yellow-400 font-bold mb-3 z-10";
                 document.getElementById('admin-controls').classList.remove('hidden');
                 document.getElementById('my-dps-container').classList.add('hidden');
             } else {
                 document.getElementById('role-notice').innerText = "⚡ Chế độ: Người chơi tham gia chiến đấu";
-                document.getElementById('role-notice').className = "text-xs text-green-400 font-bold mb-3";
+                document.getElementById('role-notice').className = "text-xs text-green-400 font-bold mb-3 z-10";
+                document.getElementById('my-skin-display').innerText = skinData[selectedSkin].name;
             }
             
-            // Lấy startTime từ database để load câu hỏi và đồng bộ thời gian chuẩn xác
             db.ref('room/gameState').once('value', (snapshot) => {
                 const state = snapshot.val();
                 if (state) {
@@ -330,7 +403,6 @@
             listenBossHP();
             listenLeaderboard();
             
-            // Khôi phục đáp án đã chọn trước đó (nếu có lưu ở firebase / local)
             db.ref('room/playerChoices/' + myPlayerId).once('value', (snapshot) => {
                 if (snapshot.exists()) {
                     selectedAnswerIndex = snapshot.val();
@@ -379,7 +451,6 @@
                 container.appendChild(btn);
             });
 
-            // Tính toán thời gian dựa vào Server Time Offset để đồng bộ tuyệt đối giữa Admin và mọi người chơi
             db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
                 const offset = offsetSnap.val() || 0;
                 const serverNow = Date.now() + offset;
@@ -443,6 +514,51 @@
             db.ref('room/gameState').update({ revealed: true });
         }
 
+        // HÀM HIỆN THỊ ANIMATION TẤN CÔNG (PLAYER -> BOSS HOẶC BOSS -> PLAYER)
+        function playAttackAnimation(isCorrect) {
+            const container = document.getElementById('skill-effects-container');
+            const effectEl = document.createElement('div');
+            
+            if (isCorrect) {
+                // Hiệu ứng người chơi tấn công Boss
+                effectEl.className = "absolute text-4xl anim-slash z-30 pointer-events-none";
+                effectEl.innerHTML = skinData[selectedSkin].skillIcon;
+                container.appendChild(effectEl);
+
+                // Tạo chữ DPS sát thương bay lên
+                setTimeout(() => {
+                    const dmgText = document.createElement('div');
+                    dmgText.className = "absolute text-green-400 font-black text-lg game-font z-30 animate-bounce";
+                    dmgText.style.top = "30%";
+                    dmgText.innerText = "-500 DPS!";
+                    container.appendChild(dmgText);
+                    setTimeout(() => dmgText.remove(), 700);
+                }, 300);
+
+            } else {
+                // Hiệu ứng Boss phản công / Phạt người chơi
+                effectEl.className = "absolute text-4xl anim-boss-fire z-30 pointer-events-none";
+                effectEl.innerHTML = "🔥";
+                container.appendChild(effectEl);
+
+                // Rung màn hình khi nhận đòn từ Boss
+                const battlefield = document.getElementById('battlefield');
+                battlefield.classList.add('shake');
+                setTimeout(() => battlefield.classList.remove('shake'), 400);
+
+                setTimeout(() => {
+                    const dmgText = document.createElement('div');
+                    dmgText.className = "absolute text-red-500 font-black text-lg game-font z-30 animate-pulse";
+                    dmgText.style.bottom = "20%";
+                    dmgText.innerText = "PHẠT -200 DPS!";
+                    container.appendChild(dmgText);
+                    setTimeout(() => dmgText.remove(), 700);
+                }, 300);
+            }
+
+            setTimeout(() => effectEl.remove(), 600);
+        }
+
         function triggerRevealState() {
             if (isRevealed) return;
             isRevealed = true;
@@ -463,6 +579,7 @@
                 }
 
                 if (selectedAnswerIndex === correctIdx) {
+                    playAttackAnimation(true);
                     const damage = 500; 
                     myDps += damage;
                     localStorage.setItem('boss_player_dps', myDps);
@@ -474,7 +591,8 @@
                     });
 
                     db.ref('room/players/' + myPlayerId).update({ dps: myDps });
-                } else if (selectedAnswerIndex !== null) {
+                } else {
+                    playAttackAnimation(false);
                     document.body.classList.add('bg-red-950');
                     setTimeout(() => document.body.classList.remove('bg-red-950'), 400);
 
@@ -492,7 +610,6 @@
                 }
             }
 
-            // Chờ 10 giây xem đáp án rồi tự động chuyển câu tiếp (nếu là Admin)
             if (isAdmin) {
                 questionTimeout = setTimeout(() => {
                     let nextIdx = currentQuestionIndex + 1;
@@ -543,9 +660,10 @@
                 lbContainer.innerHTML = '';
                 
                 sorted.forEach((p, index) => {
+                    const skinIcon = skinData[p.skin] ? skinData[p.skin].icon : '⚔️';
                     const row = document.createElement('div');
                     row.className = "flex justify-between items-center bg-gray-900/40 px-3 py-1.5 rounded-lg";
-                    row.innerHTML = `<span>#${index + 1} ${p.name}</span> <span class="font-bold text-green-400">${p.dps} DPS</span>`;
+                    row.innerHTML = `<span>#${index + 1} ${skinIcon} ${p.name}</span> <span class="font-bold text-green-400">${p.dps} DPS</span>`;
                     lbContainer.appendChild(row);
                 });
             });
@@ -579,12 +697,13 @@
 
                 sorted.forEach((p, index) => {
                     const rankColor = index === 0 ? 'text-yellow-400 font-black text-base' : index === 1 ? 'text-gray-300 font-bold' : index === 2 ? 'text-amber-600 font-bold' : 'text-gray-400';
+                    const skinIcon = skinData[p.skin] ? skinData[p.skin].icon : '⚔️';
                     const row = document.createElement('div');
                     row.className = "flex justify-between items-center bg-gray-900/60 px-4 py-2.5 rounded-xl border border-gray-800";
                     row.innerHTML = `
                         <div class="flex items-center space-x-3">
                             <span class="${rankColor}">#${index + 1}</span>
-                            <span class="font-bold text-white">${p.name} ${p.name === myName ? '(Bạn)' : ''}</span>
+                            <span class="font-bold text-white">${skinIcon} ${p.name} ${p.name === myName ? '(Bạn)' : ''}</span>
                         </div>
                         <span class="font-bold text-green-400 game-font">${p.dps.toLocaleString()} DPS</span>
                     `;
