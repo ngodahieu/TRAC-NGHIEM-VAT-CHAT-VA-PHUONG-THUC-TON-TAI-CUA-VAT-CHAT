@@ -569,45 +569,46 @@
                 });
             }
         };
+function joinGame() {
+    const nameInput = document.getElementById('player-name').value.trim();
+    const passInput = document.getElementById('admin-pass').value.trim();
 
-        function joinGame() {
-            const nameInput = document.getElementById('player-name').value.trim();
-            const passInput = document.getElementById('admin-pass').value.trim();
+    if (!nameInput) {
+        alert('Vui lòng nhập biệt danh của bạn!');
+        return;
+    }
+    myName = nameInput;
+    localStorage.setItem('boss_player_name', myName);
 
-            if (!nameInput) {
-                alert('Vui lòng nhập biệt danh của bạn!');
-                return;
-            }
-            myName = nameInput;
-            localStorage.setItem('boss_player_name', myName);
+    // Kiểm tra chính xác mật khẩu Admin
+    if (passInput === ADMIN_SECRET) {
+        isAdmin = true;
+        sessionStorage.setItem('boss_is_admin', 'true');
+    } else {
+        isAdmin = false;
+        sessionStorage.removeItem('boss_is_admin');
+    }
 
-            if (passInput === ADMIN_SECRET) {
-                isAdmin = true;
-                sessionStorage.setItem('boss_is_admin', 'true');
-            } else {
-                sessionStorage.removeItem('boss_is_admin');
-            }
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('lobby-screen').classList.remove('hidden');
+    initLobbyAvatar();
 
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('lobby-screen').classList.remove('hidden');
-            initLobbyAvatar();
+    // Nếu không phải admin thì mới đăng ký là player bình thường trên Firebase
+    if (!isAdmin) {
+        const playerRef = db.ref('room/players/' + myPlayerId);
+        playerRef.update({ name: myName, dps: myDps, avatar: avatarConfig });
+        playerRef.onDisconnect().remove();
+    }
 
-            if (!isAdmin) {
-                const playerRef = db.ref('room/players/' + myPlayerId);
-                playerRef.update({ name: myName, dps: myDps, avatar: avatarConfig });
-                playerRef.onDisconnect().remove();
-            }
-
-            setupListeners();
-            
-            db.ref('room/gameState').once('value', (snapshot) => {
-                const state = snapshot.val();
-                if (state && state.status === 'playing') {
-                    startPlayingGame();
-                }
-            });
+    setupListeners();
+    
+    db.ref('room/gameState').once('value', (snapshot) => {
+        const state = snapshot.val();
+        if (state && state.status === 'playing') {
+            startPlayingGame();
         }
-
+    });
+}
         function setupListeners() {
             db.ref('room/players').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
@@ -615,7 +616,6 @@
                 document.getElementById('player-count').innerText = totalActivePlayers;
             });
 
-z
             if (isAdmin) {
                 document.getElementById('admin-start-btn').classList.remove('hidden');
                 document.getElementById('waiting-text').innerText = "Bạn là Admin, hãy bấm nút bắt đầu khi sẵn sàng!";
