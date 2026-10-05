@@ -104,11 +104,10 @@
         <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[220px] justify-center">
             <div class="absolute inset-0 bg-gradient-to-b from-red-950/40 to-transparent pointer-events-none"></div>
             
-            <!-- Vùng chứa Boss động (Canvas / SVG mô phỏng Boss 3D/2D) -->
+            <!-- Vùng chứa Boss động -->
             <div class="boss-animated relative flex flex-col items-center z-10 my-2">
                 <div class="w-28 h-28 rounded-2xl bg-gradient-to-tr from-red-950 via-red-700 to-orange-600 flex items-center justify-center border-4 border-red-500 shadow-2xl relative">
                     <span id="boss-icon" class="text-6xl select-none filter drop-shadow-[0_0_15px_rgba(255,100,0,0.8)]">🐲</span>
-                    <!-- Hiệu ứng vòng tròn năng lượng quanh Boss -->
                     <div class="absolute inset-0 rounded-2xl border border-yellow-400/30 animate-ping pointer-events-none"></div>
                 </div>
             </div>
@@ -117,7 +116,7 @@
             <h2 class="game-font text-lg font-black text-red-500 boss-glow tracking-wider z-10">HỎA LONG VƯƠNG</h2>
             <p id="role-notice" class="text-xs text-yellow-400 font-bold mb-3 z-10">⚡ Chế độ: Người chơi tham gia chiến đấu</p>
 
-            <!-- Container hiệu ứng skill bay qua lại giữa Player và Boss -->
+            <!-- Container hiệu ứng skill -->
             <div id="skill-effects-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-20"></div>
 
             <!-- Thanh máu Boss -->
@@ -236,7 +235,6 @@
         let selectedAnswerIndex = null; 
         let isRevealed = false; 
         let totalActivePlayers = 0; 
-        let questionTimeout = null;
 
         function selectSkin(skinKey, btnElement) {
             selectedSkin = skinKey;
@@ -268,7 +266,6 @@
                     }
                 });
             }
-            // Khôi phục giao diện chọn skin cũ nếu có
             document.querySelectorAll('.skin-btn').forEach(btn => {
                 if (btn.getAttribute('onclick').includes(selectedSkin)) {
                     selectSkin(selectedSkin, btn);
@@ -421,7 +418,6 @@
             }
 
             if (timerInterval) clearInterval(timerInterval);
-            if (questionTimeout) clearTimeout(questionTimeout);
 
             selectedAnswerIndex = null;
             isRevealed = false;
@@ -436,7 +432,7 @@
 
             q.answers.forEach((ans, idx) => {
                 const btn = document.createElement('button');
-                btn.id = `ans-btn-${idx}`;
+                btn.id = `ans-btn-${idx}`; // Đã sửa lỗi: Thêm đúng ID để hàm selectAnswer nhận diện được nút
                 btn.className = "py-4 px-6 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-bold transition text-left flex items-center justify-between cursor-pointer";
                 
                 let adminStatHTML = isAdmin ? `<span id="stat-count-${idx}" class="bg-gray-900 px-2.5 py-1 rounded-lg text-yellow-400 text-xs font-mono font-bold">0/${totalActivePlayers} người chọn</span>` : '';
@@ -451,33 +447,28 @@
                 container.appendChild(btn);
             });
 
+            // ĐỒNG BỘ THỜI GIAN CHUẨN XÁC DỰA TRÊN FIREBASE SERVER TIME
             db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
                 const offset = offsetSnap.val() || 0;
-                const serverNow = Date.now() + offset;
-                const elapsedSeconds = Math.floor((serverNow - (startTime || serverNow)) / 1000);
-                let timeLeft = Math.max(0, 12 - elapsedSeconds);
+                
+                function updateTimer() {
+                    const serverNow = Date.now() + offset;
+                    const elapsedSeconds = Math.floor((serverNow - (startTime || serverNow)) / 1000);
+                    let timeLeft = Math.max(0, 12 - elapsedSeconds);
 
-                document.getElementById('timer').innerText = timeLeft + 's';
+                    document.getElementById('timer').innerText = timeLeft + 's';
 
-                if (timeLeft <= 0) {
-                    if (isAdmin && !isRevealed) {
-                        db.ref('room/gameState').update({ revealed: true });
-                    }
-                    return;
-                }
-
-                timerInterval = setInterval(() => {
-                    timeLeft--;
-                    if (timeLeft >= 0) {
-                        document.getElementById('timer').innerText = timeLeft + 's';
-                    }
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
+                        // Chỉ Admin mới có quyền tự động chuyển trạng thái revealed khi hết giờ
                         if (isAdmin && !isRevealed) {
                             db.ref('room/gameState').update({ revealed: true });
                         }
                     }
-                }, 1000);
+                }
+
+                updateTimer(); // Chạy ngay lập tức một lần tránh độ trễ 1 giây đầu
+                timerInterval = setInterval(updateTimer, 1000);
             });
         }
 
@@ -514,18 +505,15 @@
             db.ref('room/gameState').update({ revealed: true });
         }
 
-        // HÀM HIỆN THỊ ANIMATION TẤN CÔNG (PLAYER -> BOSS HOẶC BOSS -> PLAYER)
         function playAttackAnimation(isCorrect) {
             const container = document.getElementById('skill-effects-container');
             const effectEl = document.createElement('div');
             
             if (isCorrect) {
-                // Hiệu ứng người chơi tấn công Boss
                 effectEl.className = "absolute text-4xl anim-slash z-30 pointer-events-none";
                 effectEl.innerHTML = skinData[selectedSkin].skillIcon;
                 container.appendChild(effectEl);
 
-                // Tạo chữ DPS sát thương bay lên
                 setTimeout(() => {
                     const dmgText = document.createElement('div');
                     dmgText.className = "absolute text-green-400 font-black text-lg game-font z-30 animate-bounce";
@@ -536,12 +524,10 @@
                 }, 300);
 
             } else {
-                // Hiệu ứng Boss phản công / Phạt người chơi
                 effectEl.className = "absolute text-4xl anim-boss-fire z-30 pointer-events-none";
                 effectEl.innerHTML = "🔥";
                 container.appendChild(effectEl);
 
-                // Rung màn hình khi nhận đòn từ Boss
                 const battlefield = document.getElementById('battlefield');
                 battlefield.classList.add('shake');
                 setTimeout(() => battlefield.classList.remove('shake'), 400);
@@ -610,8 +596,9 @@
                 }
             }
 
+            // Chỉ Admin tự động chuyển câu hỏi sau khi hiện đáp án 5 giây
             if (isAdmin) {
-                questionTimeout = setTimeout(() => {
+                setTimeout(() => {
                     let nextIdx = currentQuestionIndex + 1;
                     if (nextIdx < questions.length) {
                         db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
@@ -629,7 +616,7 @@
                     } else {
                         db.ref('room/gameState').update({ status: 'ended' });
                     }
-                }, 10000);
+                }, 5000);
             }
         }
 
@@ -671,7 +658,6 @@
 
         function endGame(isVictory) {
             if (timerInterval) clearInterval(timerInterval);
-            if (questionTimeout) clearTimeout(questionTimeout);
             
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
