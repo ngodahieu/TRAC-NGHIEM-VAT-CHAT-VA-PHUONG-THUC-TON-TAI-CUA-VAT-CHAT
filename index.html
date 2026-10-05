@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đấu Trùm Hút Máu - Boss Raid Quiz</title>
+    <!-- Tailwind CSS qua CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Orbitron cho phong cách game gaming -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Quicksand', sans-serif; background-color: #0b0f19; color: #f3f4f6; }
+        .game-font { font-family: 'Orbitron', sans-serif; }
+        .boss-glow { text-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
+        .card-bg { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="login-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-md text-center">
+        <h1 class="game-font text-3xl font-black text-red-500 mb-2 boss-glow">ĐẤU TRÙM HÚT MÁU</h1>
+        <p class="text-gray-400 mb-6 text-sm">Hợp sức 100 người hạ gục Boss - Tranh đoạt Top DPS!</p>
+        <input type="text" id="player-name" placeholder="Nhập biệt danh của bạn..." maxlength="15" 
+            class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl mb-4 text-center text-lg focus:outline-none focus:border-red-500 font-bold">
+        <button onclick="joinGame()" class="w-full py-3 bg-red-600 hover:bg-red-700 game-font font-bold rounded-xl transition transform active:scale-95 shadow-lg shadow-red-600/30">
+            VÀO TRẬN CHIẾN
+        </button>
+    </div>
+
+    <!-- MÀN HÌNH CHỜ (LOBBY) -->
+    <div id="lobby-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-xl text-center hidden">
+        <h2 class="game-font text-2xl font-bold text-yellow-400 mb-2">PHÒNG CHỜ CHIẾN BINH</h2>
+        <p class="text-gray-400 mb-6">Đang đợi các chiến binh khác tham gia...</p>
+        <div class="bg-gray-900/60 p-4 rounded-xl mb-6 border border-gray-800">
+            <span class="text-sm text-gray-400">Số lượng người đã vào phòng:</span>
+            <div id="player-count" class="game-font text-3xl font-bold text-green-400">1</div>
+        </div>
+        <button id="start-btn" onclick="hostStartGame()" class="w-full py-3 bg-green-600 hover:bg-green-700 game-font font-bold rounded-xl transition shadow-lg shadow-green-600/30 hidden">
+            BẮT ĐẦU ĐẤT TRẬN (HOST)
+        </button>
+        <p id="waiting-text" class="text-sm text-gray-400 animate-pulse">Chủ phòng sẽ bắt đầu trận đấu khi đủ người...</p>
+    </div>
+
+    <!-- MÀN HÌNH GAME CHÍNH -->
+    <div id="game-screen" class="w-full max-w-3xl hidden">
+        <!-- Thanh máu Boss & Thông tin trận đấu -->
+        <div class="card-bg p-4 rounded-2xl mb-4 shadow-xl">
+            <div class="flex justify-between items-center mb-2">
+                <span class="game-font font-bold text-red-500">🔥 TRÙM: HỎA LONG VƯƠNG</span>
+                <span id="boss-hp-text" class="game-font font-bold text-sm text-gray-300">10,000 / 10,000 HP</span>
+            </div>
+            <!-- Thanh máu -->
+            <div class="w-full bg-gray-900 h-6 rounded-full overflow-hidden p-1 border border-red-900/50">
+                <div id="boss-hp-bar" class="bg-gradient-to-r from-red-600 to-orange-500 h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
+            </div>
+            <div class="flex justify-between items-center mt-3 text-xs text-gray-400">
+                <span>Câu hỏi: <span id="current-q-num" class="text-white font-bold">1</span>/15</span>
+                <span>Thời gian: <span id="timer" class="text-yellow-400 font-bold text-sm">12s</span></span>
+                <span>DPS Của Bạn: <span id="my-dps" class="text-green-400 font-bold">0</span></span>
+            </div>
+        </div>
+
+        <!-- Khung Câu hỏi -->
+        <div class="card-bg p-6 rounded-2xl shadow-xl mb-4 text-center">
+            <h3 id="question-title" class="text-xl font-bold mb-6 text-gray-100 min-h-[60px] flex items-center justify-center">
+                Đang tải câu hỏi...
+            </h3>
+            <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Các nút đáp án được sinh tự động bằng JS -->
+            </div>
+        </div>
+
+        <!-- Bảng xếp hạng DPS Trực tiếp (Top 3) -->
+        <div class="card-bg p-4 rounded-2xl shadow-xl">
+            <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-2">🏆 Bảng Xếp Hạng DPS (Top 3)</h4>
+            <div id="leaderboard" class="space-y-1 text-sm">
+                <!-- Render bằng JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH KẾT THÚC (VICTORY / DEFEAT) -->
+    <div id="end-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-md text-center hidden">
+        <h2 id="end-title" class="game-font text-3xl font-black mb-2">CHIẾN THẮNG!</h2>
+        <p id="end-subtitle" class="text-gray-400 mb-6">Boss đã bị hạ gục bởi sức mạnh đồng đội!</p>
+        <div class="bg-gray-900/60 p-4 rounded-xl mb-6 text-left">
+            <div class="text-sm text-gray-400 mb-1">Thành tích của bạn:</div>
+            <div class="flex justify-between"><span class="text-gray-300">Tổng sát thương (DPS):</span> <span id="final-dps" class="game-font font-bold text-green-400">0</span></div>
+            <div class="flex justify-between"><span class="text-gray-300">Xếp hạng chung cuộc:</span> <span id="final-rank" class="game-font font-bold text-yellow-400">#1</span></div>
+        </div>
+        <button onclick="location.reload()" class="w-full py-3 bg-red-600 hover:bg-red-700 game-font font-bold rounded-xl transition">
+            CHƠI LÁN KHÁC
+        </button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        // ==========================================
+        // CẤU HÌNH FIREBASE CỦA BẠN (Thay đổi phần này)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Danh sách câu hỏi (15 câu chuẩn bị sẵn cho game 7-8 phút)
+        const questions = [
+            { q: "Hợp chất nào sau đây làm quỳ tím hóa đỏ?", answers: ["NaOH", "HCl", "NaCl", "NH3"], correct: 1 },
+            { q: "Kim loại nào dẫn điện tốt nhất trong bảng tuần hoàn?", answers: ["Đồng (Cu)", "Nhôm (Al)", "Bạc (Ag)", "Vàng (Au)"], correct: 2 },
+            { q: "Khí nào chiếm tỉ lệ thể tích lớn nhất trong không khí?", answers: ["Oxy (O2)", "Nitơ (N2)", "Cacbonic (CO2)", "Hydro (H2)"], correct: 1 },
+            { q: "Công thức hóa học của Đường mía (Saccharose) là gì?", answers: ["C6H12O6", "C12H22O11", "(C6H10O5)n", "CH3COOH"], correct: 1 },
+            { q: "Dung dịch làm đổi màu phenolphtalein từ không màu sang hồng là?", answers: ["Axit clohydric", "Natri hidroxit", "Natri clorua", "Rượu etylic"], correct: 1 },
+            { q: "Quặng bauxite là nguyên liệu chính để sản xuất kim loại nào?", answers: ["Sắt", "Đồng", "Nhôm", "Kẽm"], correct: 2 },
+            { q: "Nhiệt độ sôi của nước ở áp suất tiêu chuẩn là bao nhiêu?", answers: ["90°C", "100°C", "110°C", "80°C"], correct: 1 },
+            { q: "Chất nào được mệnh danh là 'vàng đen'?", answers: ["Than đá", "Dầu mỏ", "Kim cương đen", "Asphalt"], correct: 1 },
+            { q: "Trong các kim loại sau, kim loại nào tác dụng với nước ở nhiệt độ thường?", answers: ["Fe", "Cu", "Na", "Ag"], correct: 2 },
+            { q: "pH của dung dịch axit mạnh thường nằm trong khoảng nào?", answers: ["Từ 0 đến gần 7", "Đúng bằng 7", "Từ trên 7 đến 14", "Bằng 14"], correct: 0 },
+            { q: "Đâu là tên gọi của axit có trong giấm ăn?", answers: ["Axit formic", "Axit acetic", "Axit sulfuric", "Axit nitric"], correct: 1 },
+            { q: "Kim loại nào ở trạng thái lỏng ở điều kiện thường?", answers: ["Sắt", "Thủy ngân", "Bạc", "Kẽm"], correct: 1 },
+            { q: "Hiện tượng mưa axit chủ yếu do khí nào gây ra?", answers: ["CO2 và CH4", "SO2 và NOx", "O3 và CFC", "NH3 và H2S"], correct: 1 },
+            { q: "Chất nào sau đây không dẫn điện?", answers: ["Nước muối", "Dung dịch NaOH", "Nước cất", "Axit sunfuric loãng"], correct: 2 },
+            { q: "Số hiệu nguyên tử của nguyên tố Carbon (C) là mấy?", answers: ["5", "6", "7", "8"], correct: 1 }
+        ];
+
+        let myPlayerId = 'p_' + Math.random().toString(36.substring(2, 9));
+        let myName = '';
+        let myDps = 0;
+        let currentQuestionIndex = 0;
+        let timerInterval;
+        let timeLeft = 12;
+        let answeredCurrent = false;
+
+        function joinGame() {
+            const nameInput = document.getElementById('player-name').value.trim();
+            if (!nameInput) {
+                alert('Vui lòng nhập biệt danh của bạn!');
+                return;
+            }
+            myName = nameInput;
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('lobby-screen').classList.remove('hidden');
+
+            // Đăng ký người chơi lên Firebase Room
+            const playerRef = db.ref('room/players/' + myPlayerId);
+            playerRef.set({ name: myName, dps: 0 });
+            playerRef.onDisconnect().remove();
+
+            // Lắng nghe tổng số lượng người chơi
+            db.ref('room/players').on('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const count = Object.keys(players).length;
+                document.getElementById('player-count').innerText = count;
+
+                // Nếu là người đầu tiên vào phòng, hiện nút Start cho phép làm Host
+                const keys = Object.keys(players);
+                if (keys.length > 0 && keys[0] === myPlayerId) {
+                    document.getElementById('start-btn').classList.remove('hidden');
+                    document.getElementById('waiting-text').innerText = "Bạn là Chủ phòng (Host), có thể bắt đầu trận đấu!";
+                }
+            });
+
+            // Lắng nghe trạng thái game bắt đầu
+            db.ref('room/gameState').on('value', (snapshot) => {
+                const state = snapshot.val();
+                if (state && state.status === 'playing') {
+                    currentQuestionIndex = state.questionIndex || 0;
+                    startPlayingGame();
+                }
+            });
+        }
+
+        function hostStartGame() {
+            db.ref('room/gameState').set({ status: 'playing', questionIndex: 0 });
+        }
+
+        function startPlayingGame() {
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            loadQuestion();
+            listenBossHP();
+            listenLeaderboard();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                endGame(true);
+                return;
+            }
+
+            answeredCurrent = false;
+            timeLeft = 12;
+            document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
+            
+            const q = questions[currentQuestionIndex];
+            document.getElementById('question-title').innerText = q.q;
+
+            const container = document.getElementById('answers-container');
+            container.innerHTML = '';
+
+            q.answers.forEach((ans, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "py-4 px-6 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-bold transition transform active:scale-95 text-left flex items-center justify-between";
+                btn.innerHTML = `<span><span class="text-red-500 mr-2 font-black">${['A', 'B', 'C', 'D'][idx]}.</span> ${ans}</span>`;
+                btn.onclick = () => submitAnswer(idx, q.correct);
+                container.appendChild(btn);
+            });
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = timeLeft + 's';
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (!answeredCurrent) {
+                        handleWrongAnswer();
+                    }
+                }
+            }, 1000);
+        }
+
+        function submitAnswer(selectedIndex, correctIndex) {
+            if (answeredCurrent) return;
+            answeredCurrent = true;
+            clearInterval(timerInterval);
+
+            const buttons = document.getElementById('answers-container').children;
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].disabled = true;
+                if (i === correctIndex) buttons[i].classList.add('bg-green-600/80', 'border-green-500');
+                if (i === selectedIndex && i !== correctIndex) buttons[i].classList.add('bg-red-600/80', 'border-red-500');
+            }
+
+            if (selectedIndex === correctIndex) {
+                // Đúng: Gây sát thương Boss phụ thuộc vào tốc độ
+                const damage = timeLeft * 100 + 200;
+                myDps += damage;
+                document.getElementById('my-dps').innerText = myDps;
+
+                // Cập nhật lên Firebase Boss HP
+                db.ref('room/bossHP').transaction((currentHP) => {
+                    if (currentHP === null) return 10000 - damage;
+                    return Math.max(0, currentHP - damage);
+                });
+
+                // Cập nhật điểm DPS cá nhân lên Firebase
+                db.ref('room/players/' + myPlayerId).update({ dps: myDps });
+            } else {
+                handleWrongAnswer();
+            }
+
+            // Chuyển câu tiếp theo sau 2 giây (Chỉ host hoặc tự động đồng bộ)
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (myPlayerId === Object.keys(db.ref('room/players'))[0]) { // Host điều khiển tiến trình
+                    if (currentQuestionIndex < questions.length) {
+                        db.ref('room/gameState').update({ questionIndex: currentQuestionIndex });
+                    } else {
+                        db.ref('room/gameState').update({ status: 'ended' });
+                    }
+                }
+            }, 2000);
+        }
+
+        function handleWrongAnswer() {
+            // Sai: Bị phạt giảm một phần điểm hoặc màn hình chớp đỏ
+            document.body.classList.add('bg-red-950');
+            setTimeout(() => document.body.classList.remove('bg-red-950'), 400);
+        }
+
+        function listenBossHP() {
+            const hpRef = db.ref('room/bossHP');
+            hpRef.on('value', (snapshot) => {
+                let hp = snapshot.val();
+                if (hp === null) {
+                    hp = 10000;
+                    hpRef.set(10000);
+                }
+                const percent = (hp / 10000) * 100;
+                document.getElementById('boss-hp-bar').style.width = percent + '%';
+                document.getElementById('boss-hp-text').innerText = `${hp.toLocaleString()} / 10,000 HP`;
+
+                if (hp <= 0) {
+                    endGame(true);
+                }
+            });
+        }
+
+        function listenLeaderboard() {
+            db.ref('room/players').orderByChild('dps').limitToLast(3).on('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const sorted = Object.values(players).sort((a, b) => b.dps - a.dps);
+                
+                const lbContainer = document.getElementById('leaderboard');
+                lbContainer.innerHTML = '';
+                
+                sorted.forEach((p, index) => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between items-center bg-gray-900/40 px-3 py-1.5 rounded-lg";
+                    row.innerHTML = `<span>#${index + 1} ${p.name}</span> <span class="font-bold text-green-400">${p.dps} DPS</span>`;
+                    lbContainer.appendChild(row);
+                });
+            });
+        }
+
+        function endGame(isVictory) {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('hidden');
+            
+            document.getElementById('final-dps').innerText = myDps;
+            if (isVictory) {
+                document.getElementById('end-title.innerHTML').innerText = "CHIẾN THẮNG TRÙM!";
+                document.getElementById('end-title').className = "game-font text-3xl font-black mb-2 text-green-400";
+                document.getElementById('end-subtitle').innerText = "Cộng đồng đã hạ gục Hỏa Long Vương thành công!";
+            } else {
+                document.getElementById('end-title').innerText = "THẤT BẠI!";
+                document.getElementById('end-title').className = "game-font text-3xl font-black mb-2 text-red-500";
+                document.getElementById('end-subtitle').innerText = "Boss còn quá nhiều máu, hãy cố gắng lần sau!";
+            }
+        }
+    </script>
+</body>
+</html>
