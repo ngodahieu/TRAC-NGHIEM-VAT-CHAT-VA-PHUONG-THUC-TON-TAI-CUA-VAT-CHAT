@@ -60,7 +60,7 @@
                 <span class="text-4xl">🐲</span>
             </div>
             <h2 class="game-font text-lg font-black text-red-500 boss-glow tracking-wider">HỎA LONG VƯƠNG</h2>
-            <p class="text-xs text-gray-400 mb-3">Thần Long Hủy Diệt - Cần sự hợp sức của tất cả chiến binh!</p>
+            <p id="role-notice" class="text-xs text-yellow-400 font-bold mb-3">⚡ Chế độ: Người chơi tham gia chiến đấu</p>
 
             <!-- Thanh máu Boss -->
             <div class="w-full flex justify-between items-center mb-1 px-1">
@@ -75,7 +75,7 @@
             <div class="w-full flex justify-between items-center mt-3 text-xs text-gray-400 px-1 border-t border-gray-800 pt-2">
                 <span>Câu hỏi: <span id="current-q-num" class="text-white font-bold">1</span>/15</span>
                 <span>Thời gian: <span id="timer" class="text-yellow-400 font-bold text-sm">12s</span></span>
-                <span>DPS Của Bạn: <span id="my-dps" class="text-green-400 font-bold">0</span></span>
+                <span id="my-dps-container">DPS Của Bạn: <span id="my-dps" class="text-green-400 font-bold">0</span></span>
             </div>
         </div>
 
@@ -86,6 +86,13 @@
             </h3>
             <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Các nút đáp án sinh tự động bằng JS -->
+            </div>
+            
+            <!-- Nút điều khiển dành riêng cho Admin -->
+            <div id="admin-controls" class="mt-6 hidden">
+                <button onclick="adminShowAnswerAndNext()" class="w-full py-3 bg-yellow-600 hover:bg-yellow-500 text-gray-950 game-font font-black rounded-xl shadow-lg transition">
+                    👑 HIỆN ĐÁP ÁN & CHUYỂN CÂU TIẾP THEO (ADMIN)
+                </button>
             </div>
         </div>
 
@@ -164,7 +171,8 @@
         let currentQuestionIndex = 0;
         let timerInterval = null;
         let timeLeft = 12;
-        let answeredCurrent = false;
+        let selectedAnswerIndex = null; // Lưu đáp án người chơi đã chọn trong câu hiện tại
+        let isRevealed = false; // Trạng thái hiển thị đáp án
 
         window.onload = function() {
             if (myName) {
@@ -191,9 +199,11 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.remove('hidden');
 
-            const playerRef = db.ref('room/players/' + myPlayerId);
-            playerRef.update({ name: myName, dps: myDps });
-            playerRef.onDisconnect().remove();
+            if (!isAdmin) {
+                const playerRef = db.ref('room/players/' + myPlayerId);
+                playerRef.update({ name: myName, dps: myDps });
+                playerRef.onDisconnect().remove();
+            }
 
             setupListeners();
         }
@@ -204,9 +214,11 @@
 
             document.getElementById('login-screen').classList.add('hidden');
             
-            const playerRef = db.ref('room/players/' + myPlayerId);
-            playerRef.update({ name: myName, dps: myDps });
-            playerRef.onDisconnect().remove();
+            if (!isAdmin) {
+                const playerRef = db.ref('room/players/' + myPlayerId);
+                playerRef.update({ name: myName, dps: myDps });
+                playerRef.onDisconnect().remove();
+            }
 
             setupListeners();
         }
@@ -227,12 +239,13 @@
                 const state = snapshot.val();
                 if (state) {
                     if (state.status === 'playing') {
-                        // Tránh load lại câu hỏi trùng lặp liên tục nếu index không đổi
                         if (currentQuestionIndex !== state.questionIndex) {
                             currentQuestionIndex = state.questionIndex || 0;
                             loadQuestion();
                         }
-                        // Nếu đang ở lobby mà state là playing thì ẩn lobby, hiện game
+                        if (state.revealed && !isRevealed) {
+                            triggerRevealState();
+                        }
                         if (!document.getElementById('game-screen').classList.contains('hidden') === false &&
                             document.getElementById('lobby-screen').classList.contains('hidden') === false) {
                             startPlayingGame();
@@ -242,17 +255,37 @@
                     }
                 }
             });
+
+            // Lắng nghe số lượng lựa chọn của toàn bộ người chơi để hiển thị cho Admin
+            db.ref('room/answersCount').on('value', (snapshot) => {
+                if (isAdmin) {
+                    const counts = snapshot.val() || [0, 0, 0, 0];
+                    updateAdminAnswerStats(counts);
+                }
+            });
         }
 
         function adminStartGame() {
-            db.ref('room/gameState').set({ status: 'playing', questionIndex: 0 });
+            db.ref('room/gameState').set({ status: 'playing', questionIndex: 0, revealed: false });
             db.ref('room/bossHP').set(10000);
+            db.ref('room/answersCount').set([0, 0, 0, 0]);
+            db.ref('room/playerChoices').remove();
         }
 
         function startPlayingGame() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
+
+            if (isAdmin) {
+                document.getElementById('role-notice').innerText = "👑 Chế độ: Admin (Người quan sát - Không chơi)";
+                document.getElementById('role-notice').className = "text-xs text-yellow-400 font-bold mb-3";
+                document.getElementById('admin-controls').classList.remove('hidden');
+                document.getElementById('my-dps-container').classList.add('hidden');
+            } else {
+                document.getElementById('role-notice').innerText = "⚡ Chế độ: Người chơi tham gia chiến đấu";
+                document.getElementById('role-notice').className = "text-xs text-green-400 font-bold mb-3";
+            }
             
             loadQuestion();
             listenBossHP();
@@ -267,10 +300,10 @@
                 return;
             }
 
-            // Xóa bộ đếm cũ nếu có trước khi tạo mới
             if (timerInterval) clearInterval(timerInterval);
 
-            answeredCurrent = false;
+            selectedAnswerIndex = null;
+            isRevealed = false;
             timeLeft = 12;
             document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
             document.getElementById('timer').innerText = timeLeft + 's';
@@ -283,69 +316,140 @@
 
             q.answers.forEach((ans, idx) => {
                 const btn = document.createElement('button');
-                btn.className = "py-4 px-6 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-bold transition transform active:scale-95 text-left flex items-center justify-between cursor-pointer";
-                btn.innerHTML = `<span><span class="text-red-500 mr-2 font-black">${['A', 'B', 'C', 'D'][idx]}.</span> ${ans}</span>`;
-                btn.onclick = () => submitAnswer(idx, q.correct);
+                btn.id = `ans-btn-${idx}`;
+                btn.className = "py-4 px-6 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-bold transition text-left flex items-center justify-between cursor-pointer";
+                
+                let adminStatHTML = isAdmin ? `<span id="stat-count-${idx}" class="bg-gray-900 px-2.5 py-1 rounded-lg text-yellow-400 text-xs font-mono font-bold">0 người chọn</span>` : '';
+                
+                btn.innerHTML = `<span><span class="text-red-500 mr-2 font-black">${['A', 'B', 'C', 'D'][idx]}.</span> ${ans}</span> ${adminStatHTML}`;
+                
+                if (!isAdmin) {
+                    btn.onclick = () => selectAnswer(idx);
+                } else {
+                    btn.disabled = true; // Admin không được bấm chọn đáp án
+                }
                 container.appendChild(btn);
             });
 
-            // Khởi chạy lại đồng hồ đếm ngược chuẩn xác
+            // Đồng hồ đếm ngược đồng bộ
             timerInterval = setInterval(() => {
                 timeLeft--;
                 document.getElementById('timer').innerText = timeLeft + 's';
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    if (!answeredCurrent) {
-                        handleWrongAnswer();
+                    // Hết giờ, tự động kích hoạt hiện kết quả
+                    if (isAdmin) {
+                        db.ref('room/gameState').update({ revealed: true });
                     }
                 }
             }, 1000);
         }
 
-        function submitAnswer(selectedIndex, correctIndex) {
-            if (answeredCurrent) return;
-            answeredCurrent = true;
+        function selectAnswer(idx) {
+            if (isRevealed || selectedAnswerIndex !== null) return; // Đã chọn hoặc đã lộ đáp án thì không cho đổi
+            
+            // Xóa chọn cũ nếu có, highlight nút mới chọn
+            const oldBtn = document.getElementById(`ans-btn-${selectedAnswerIndex}`);
+            if (oldBtn) oldBtn.classList.remove('border-blue-500', 'bg-blue-950/40');
+
+            selectedAnswerIndex = idx;
+            const currentBtn = document.getElementById(`ans-btn-${idx}`);
+            if (currentBtn) {
+                currentBtn.classList.add('border-blue-500', 'bg-blue-950/40');
+            }
+
+            // Ghi nhận lựa chọn lên Firebase để Admin thấy số lượng người chọn
+            db.ref('room/playerChoices/' + myPlayerId).set(idx);
+            
+            // Cập nhật bộ đếm số lượng thống kê trên Firebase
+            db.ref('room/answersCount').transaction((counts) => {
+                if (!counts) counts = [0, 0, 0, 0];
+                // Tránh cộng dồn nếu người chơi đổi ý (ở đây khóa cứng 1 lần chọn nên an toàn)
+                counts[idx] = (counts[idx] || 0) + 1;
+                return counts;
+            });
+        }
+
+        function updateAdminAnswerStats(counts) {
+            for (let i = 0; i < 4; i++) {
+                const statEl = document.getElementById(`stat-count-${i}`);
+                if (statEl) {
+                    statEl.innerText = `${counts[i] || 0} người chọn`;
+                }
+            }
+        }
+
+        function adminShowAnswerAndNext() {
+            if (timerInterval) clearInterval(timerInterval);
+            db.ref('room/gameState').update({ revealed: true });
+        }
+
+        function triggerRevealState() {
+            if (isRevealed) return;
+            isRevealed = true;
             if (timerInterval) clearInterval(timerInterval);
 
-            const buttons = document.getElementById('answers-container').children;
-            for (let i = 0; i < buttons.length; i++) {
-                buttons[i].disabled = true;
-                if (i === correctIndex) buttons[i].classList.add('bg-green-600/80', 'border-green-500');
-                if (i === selectedIndex && i !== correctIndex) buttons[i].classList.add('bg-red-600/80', 'border-red-500');
-            }
+            const q = questions[currentQuestionIndex];
+            const correctIdx = q.correct;
 
-            if (selectedIndex === correctIndex) {
-                const damage = timeLeft * 100 + 200;
-                myDps += damage;
-                localStorage.setItem('boss_player_dps', myDps);
-                document.getElementById('my-dps').innerText = myDps;
+            // Xử lý tính điểm cho người chơi nếu chưa phải Admin
+            if (!isAdmin) {
+                const buttons = document.getElementById('answers-container').children;
+                for (let i = 0; i < buttons.length; i++) {
+                    buttons[i].disabled = true;
+                    if (i === correctIdx) {
+                        buttons[i].classList.add('bg-green-600/80', 'border-green-500');
+                    } else if (i === selectedAnswerIndex && i !== correctIdx) {
+                        buttons[i].classList.add('bg-red-600/80', 'border-red-500');
+                    }
+                }
 
-                db.ref('room/bossHP').transaction((currentHP) => {
-                    if (currentHP === null) return 10000 - damage;
-                    return Math.max(0, currentHP - damage);
-                });
+                if (selectedAnswerIndex === correctIdx) {
+                    // Trả lời đúng: + điểm DPS
+                    const damage = 500; // Hoặc tính theo thời gian tùy ý
+                    myDps += damage;
+                    localStorage.setItem('boss_player_dps', myDps);
+                    document.getElementById('my-dps').innerText = myDps;
 
-                db.ref('room/players/' + myPlayerId).update({ dps: myDps });
+                    db.ref('room/bossHP').transaction((currentHP) => {
+                        if (currentHP === null) return 10000 - damage;
+                        return Math.max(0, currentHP - damage);
+                    });
+
+                    db.ref('room/players/' + myPlayerId).update({ dps: myDps });
+                } else {
+                    // Trả lời sai hoặc không chọn: - điểm (hoặc chuyển màu đỏ)
+                    document.body.classList.add('bg-red-950');
+                    setTimeout(() => document.body.classList.remove('bg-red-950'), 400);
+
+                    myDps = Math.max(0, myDps - 200); // Trừ điểm phạt
+                    localStorage.setItem('boss_player_dps', myDps);
+                    document.getElementById('my-dps').innerText = myDps;
+                    db.ref('room/players/' + myPlayerId).update({ dps: myDps });
+                }
             } else {
-                handleWrongAnswer();
+                // Giao diện Admin khi hiện đáp án
+                const buttons = document.getElementById('answers-container').children;
+                for (let i = 0; i < buttons.length; i++) {
+                    if (i === correctIdx) {
+                        buttons[i].classList.add('bg-green-600/80', 'border-green-500');
+                    }
+                }
             }
 
-            // Chuyển câu hỏi sau 2 giây (Chỉ Admin điều phối)
+            // Hiển thị kết quả trong vòng 10 giây rồi tự động chuyển câu tiếp theo (Admin điều phối chuyển câu)
             setTimeout(() => {
-                let nextIdx = currentQuestionIndex + 1;
                 if (isAdmin) {
+                    let nextIdx = currentQuestionIndex + 1;
                     if (nextIdx < questions.length) {
-                        db.ref('room/gameState').update({ questionIndex: nextIdx });
+                        db.ref('room/answersCount').set([0, 0, 0, 0]);
+                        db.ref('room/playerChoices').remove();
+                        db.ref('room/gameState').update({ questionIndex: nextIdx, revealed: false });
                     } else {
                         db.ref('room/gameState').update({ status: 'ended' });
                     }
                 }
-            }, 2000);
-        }
-
-        function handleWrongAnswer() {
-            document.body.classList.add('bg-red-950');
-            setTimeout(() => document.body.classList.remove('bg-red-950'), 400);
+            }, 10000); // Kéo dài thời gian xem kết quả đúng/sai là 10 giây
         }
 
         function listenBossHP() {
@@ -354,7 +458,7 @@
                 let hp = snapshot.val();
                 if (hp === null) {
                     hp = 10000;
-                    hpRef.set(10000);
+                    if (isAdmin) hpRef.set(10000);
                 }
                 const percent = (hp / 10000) * 100;
                 document.getElementById('boss-hp-bar').style.width = percent + '%';
@@ -393,14 +497,13 @@
             if (isVictory) {
                 document.getElementById('end-title').innerHTML = "CHIẾN THẮNG TRÙM!";
                 document.getElementById('end-title').className = "game-font text-3xl font-black mb-2 text-green-400";
-                document.getElementById('end-subtitle').innerText = "Cộng đồng đã hợp sức hạ gục Hỏa Long Vương thành công!";
+                document.getElementById('end-subtitle').innerText = "Cộng đồng lớp đã hợp sức hạ gục Hỏa Long Vương thành công!";
             } else {
                 document.getElementById('end-title').innerText = "TRẬN ĐẤU KẾT THÚC!";
                 document.getElementById('end-title').className = "game-font text-3xl font-black mb-2 text-yellow-400";
                 document.getElementById('end-subtitle').innerText = "Đã hoàn thành toàn bộ câu hỏi thử thách!";
             }
 
-            // Lấy toàn bộ danh sách người chơi để hiển thị bảng xếp hạng chung cuộc
             db.ref('room/players').once('value', (snapshot) => {
                 const players = snapshot.val() || {};
                 const sorted = Object.values(players).sort((a, b) => b.dps - a.dps);
@@ -425,11 +528,9 @@
         }
 
         function returnHome() {
-            // Xóa dữ liệu tạm để reset lại phiên chơi mới
             localStorage.removeItem('boss_player_name');
             localStorage.removeItem('boss_player_dps');
             localStorage.removeItem('boss_player_id');
-            // Tải lại trang để về sạch màn hình đăng nhập
             location.reload();
         }
     </script>
