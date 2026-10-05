@@ -429,119 +429,133 @@
                 }
             });
         }
+// HÀM KHỞI TẠO MÔ HÌNH RỒNG 3D VÀNG KIM OAI HÙNG
+function init3DDragon() {
+    const container = document.getElementById('dragon-3d-canvas-container');
+    if (!container) return;
+    container.innerHTML = ''; // Xóa sạch canvas cũ
 
-        // HÀM KHỞI TẠO MÔ HÌNH RỒNG 3D THẬT (CHUẨN ĐẦU, SỪNG, THÂN UỐN LƯỢN)
-        function init3DDragon() {
-            const container = document.getElementById('dragon-3d-canvas-container');
-            if (!container) return;
-            container.innerHTML = ''; // Xóa sạch canvas cũ nếu có
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
 
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            container.appendChild(renderer.domElement);
+    // Ánh sáng vàng ấm và rực rỡ chuẩn thần thoại
+    const ambientLight = new THREE.AmbientLight(0xffea88, 1.8);
+    scene.add(ambientLight);
 
-            // Ánh sáng vàng lửa rực rỡ
-            const ambientLight = new THREE.AmbientLight(0xffcc88, 1.5);
-            scene.add(ambientLight);
+    const pointLight1 = new THREE.PointLight(0xffaa00, 5, 50);
+    pointLight1.position.set(5, 5, 5);
+    scene.add(pointLight1);
 
-            const pointLight1 = new THREE.PointLight(0xff3300, 4, 50);
-            pointLight1.position.set(5, 5, 5);
-            scene.add(pointLight1);
+    const pointLight2 = new THREE.PointLight(0xff3300, 3, 50);
+    pointLight2.position.set(-5, -2, 3);
+    scene.add(pointLight2);
 
-            const pointLight2 = new THREE.PointLight(0xffea00, 3, 50);
-            pointLight2.position.set(-5, -2, 3);
-            scene.add(pointLight2);
+    // Đường cong thân rồng uốn lượn
+    const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-2.8, -1.2, 0),
+        new THREE.Vector3(-1.8, 1.2, 1.2),
+        new THREE.Vector3(0.2, 1.8, -1),
+        new THREE.Vector3(2.2, 0.2, 0.2),
+        new THREE.Vector3(1.2, -1.6, 1.2),
+        new THREE.Vector3(-0.8, -1.2, 0)
+    ]);
 
-            // Thân rồng uốn lượn phong cách Á Đông
-            const curve = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(-2.8, -1.2, 0),
-                new THREE.Vector3(-1.8, 1.2, 1.2),
-                new THREE.Vector3(0.2, 1.8, -1),
-                new THREE.Vector3(2.2, 0.2, 0.2),
-                new THREE.Vector3(1.2, -1.6, 1.2),
-                new THREE.Vector3(-0.8, -1.2, 0)
-            ]);
+    // Chất liệu Vàng Kim óng ánh
+    const dragonMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        metalness: 0.9,
+        roughness: 0.15,
+        emissive: 0x553300,
+        emissiveIntensity: 0.35
+    });
 
-            const dragonMaterial = new THREE.MeshStandardMaterial({
-                color: 0xff8800,
-                metalness: 0.85,
-                roughness: 0.2,
-                emissive: 0x441100,
-                emissiveIntensity: 0.3
-            });
+    const bodyGeometry = new THREE.TubeGeometry(curve, 140, 0.42, 20, false);
+    const dragonBody = new THREE.Mesh(bodyGeometry, dragonMaterial);
+    scene.add(dragonBody);
 
-            const bodyGeometry = new THREE.TubeGeometry(curve, 120, 0.42, 16, false);
-            const dragonBody = new THREE.Mesh(bodyGeometry, dragonMaterial);
-            scene.add(dragonBody);
-
-            // Nhóm Đầu Rồng Uy Dũng
-            const headGroup = new THREE.Group();
-            
-            // Mõm rồng
-            const snoutGeo = new THREE.ConeGeometry(0.38, 1.3, 8);
-            snoutGeo.rotateX(Math.PI / 2);
-            const snout = new THREE.Mesh(snoutGeo, dragonMaterial);
-            snout.position.set(0, 0.15, 1.1);
-            headGroup.add(snout);
-
-            // Sừng rồng sắc nhọn (Màu ngà ánh kim)
-            const hornMat = new THREE.MeshStandardMaterial({ color: 0xffffee, roughness: 0.2, metalness: 0.5 });
-            const hornGeo = new THREE.ConeGeometry(0.1, 1.1, 6);
-            
-            const leftHorn = new THREE.Mesh(hornGeo, hornMat);
-            leftHorn.position.set(0.28, 0.75, 0.7);
-            leftHorn.rotation.z = -0.35;
-            leftHorn.rotation.x = 0.4;
-            headGroup.add(leftHorn);
-
-            const rightHorn = new THREE.Mesh(hornGeo, hornMat);
-            rightHorn.position.set(-0.28, 0.75, 0.7);
-            rightHorn.rotation.z = 0.35;
-            rightHorn.rotation.x = 0.4;
-            headGroup.add(rightHorn);
-
-            // Mắt rồng sáng rực
-            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-            const eyeGeo = new THREE.SphereGeometry(0.08, 8, 8);
-            
-            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-            leftEye.position.set(0.22, 0.35, 1.0);
-            headGroup.add(leftEye);
-
-            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-            rightEye.position.set(-0.22, 0.35, 1.0);
-            headGroup.add(rightEye);
-
-            headGroup.position.set(-2.8, -1.2, 0);
-            headGroup.rotation.y = -0.6;
-            scene.add(headGroup);
-
-            camera.position.set(0, 0, 7.2);
-
-            // Hiệu ứng hoạt họa xoay mượt mà
-            let clock = new THREE.Clock();
-            function animate() {
-                requestAnimationFrame(animate);
-                const elapsedTime = clock.getElapsedTime();
-
-                dragonBody.rotation.y = Math.sin(elapsedTime * 0.6) * 0.18;
-                headGroup.rotation.y = -0.6 + Math.sin(elapsedTime * 0.9) * 0.12;
-                headGroup.rotation.x = Math.cos(elapsedTime * 0.5) * 0.08;
-                
-                renderer.render(scene, camera);
-            }
-            animate();
-
-            window.addEventListener('resize', () => {
-                camera.aspect = container.clientWidth / container.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, container.clientHeight);
-            });
+    // Thêm hệ thống vây/gai lưng dọc theo đường cong thân rồng
+    const spikeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0.6 });
+    const spikeGeo = new THREE.ConeGeometry(0.12, 0.35, 4);
+    const spinePoints = curve.getPoints(35);
+    
+    spinePoints.forEach((pt, i) => {
+        if (i % 2 === 0) {
+            const spike = new THREE.Mesh(spikeGeo, spikeMat);
+            spike.position.copy(pt);
+            spike.position.y += 0.45; // Đặt nhô lên phía trên lưng
+            spike.rotation.x = 0.2;
+            scene.add(spike);
         }
+    });
 
+    // Nhóm Đầu Rồng Chi Tiết (Miệng mở, sừng dài, râu rồng)
+    const headGroup = new THREE.Group();
+    
+    // Mõm và đầu chính
+    const snoutGeo = new THREE.ConeGeometry(0.4, 1.4, 10);
+    snoutGeo.rotateX(Math.PI / 2);
+    const snout = new THREE.Mesh(snoutGeo, dragonMaterial);
+    snout.position.set(0, 0.15, 1.1);
+    headGroup.add(snout);
+
+    // Sừng rồng dài ánh ngà
+    const hornMat = new THREE.MeshStandardMaterial({ color: 0xffffee, roughness: 0.2, metalness: 0.4 });
+    const hornGeo = new THREE.ConeGeometry(0.09, 1.3, 6);
+    
+    const leftHorn = new THREE.Mesh(hornGeo, hornMat);
+    leftHorn.position.set(0.32, 0.85, 0.6);
+    leftHorn.rotation.z = -0.4;
+    leftHorn.rotation.x = 0.3;
+    headGroup.add(leftHorn);
+
+    const rightHorn = new THREE.Mesh(hornGeo, hornMat);
+    rightHorn.position.set(-0.32, 0.85, 0.6);
+    rightHorn.rotation.z = 0.4;
+    rightHorn.rotation.x = 0.3;
+    headGroup.add(rightHorn);
+
+    // Mắt rồng đỏ rực uy dũng
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff2200 });
+    const eyeGeo = new THREE.SphereGeometry(0.09, 8, 8);
+    
+    const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+    leftEye.position.set(0.24, 0.38, 1.0);
+    headGroup.add(leftEye);
+
+    const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+    rightEye.position.set(-0.24, 0.38, 1.0);
+    headGroup.add(rightEye);
+
+    headGroup.position.set(-2.8, -1.2, 0);
+    headGroup.rotation.y = -0.6;
+    scene.add(headGroup);
+
+    camera.position.set(0, 0, 7.2);
+
+    // Hoạt họa chuyển động mượt mà
+    let clock = new THREE.Clock();
+    function animate() {
+        requestAnimationFrame(animate);
+        const elapsedTime = clock.getElapsedTime();
+
+        dragonBody.rotation.y = Math.sin(elapsedTime * 0.6) * 0.18;
+        headGroup.rotation.y = -0.6 + Math.sin(elapsedTime * 0.9) * 0.12;
+        headGroup.rotation.x = Math.cos(elapsedTime * 0.5) * 0.08;
+        
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+}
         function loadQuestion(startTime) {
             if (currentQuestionIndex >= questions.length) {
                 if (isAdmin) {
