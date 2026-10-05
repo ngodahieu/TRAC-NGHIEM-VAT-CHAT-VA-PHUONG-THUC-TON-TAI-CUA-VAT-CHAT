@@ -171,13 +171,13 @@
         let currentQuestionIndex = 0;
         let timerInterval = null;
         let timeLeft = 12;
-        let selectedAnswerIndex = null; // Lưu đáp án người chơi đã chọn trong câu hiện tại
-        let isRevealed = false; // Trạng thái hiển thị đáp án
+        let selectedAnswerIndex = null; 
+        let isRevealed = false; 
 
+        // ĐÃ SỬA: Chỉ điền sẵn tên cũ vào ô nhập (nếu có) chứ không tự động đăng nhập ngầm nữa
         window.onload = function() {
             if (myName) {
                 document.getElementById('player-name').value = myName;
-                checkExistingSession();
             }
         };
 
@@ -199,21 +199,6 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.remove('hidden');
 
-            if (!isAdmin) {
-                const playerRef = db.ref('room/players/' + myPlayerId);
-                playerRef.update({ name: myName, dps: myDps });
-                playerRef.onDisconnect().remove();
-            }
-
-            setupListeners();
-        }
-
-        function checkExistingSession() {
-            const passInput = document.getElementById('admin-pass').value.trim();
-            if (passInput === ADMIN_SECRET) isAdmin = true;
-
-            document.getElementById('login-screen').classList.add('hidden');
-            
             if (!isAdmin) {
                 const playerRef = db.ref('room/players/' + myPlayerId);
                 playerRef.update({ name: myName, dps: myDps });
@@ -256,7 +241,6 @@
                 }
             });
 
-            // Lắng nghe số lượng lựa chọn của toàn bộ người chơi để hiển thị cho Admin
             db.ref('room/answersCount').on('value', (snapshot) => {
                 if (isAdmin) {
                     const counts = snapshot.val() || [0, 0, 0, 0];
@@ -326,18 +310,16 @@
                 if (!isAdmin) {
                     btn.onclick = () => selectAnswer(idx);
                 } else {
-                    btn.disabled = true; // Admin không được bấm chọn đáp án
+                    btn.disabled = true; 
                 }
                 container.appendChild(btn);
             });
 
-            // Đồng hồ đếm ngược đồng bộ
             timerInterval = setInterval(() => {
                 timeLeft--;
                 document.getElementById('timer').innerText = timeLeft + 's';
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    // Hết giờ, tự động kích hoạt hiện kết quả
                     if (isAdmin) {
                         db.ref('room/gameState').update({ revealed: true });
                     }
@@ -346,9 +328,8 @@
         }
 
         function selectAnswer(idx) {
-            if (isRevealed || selectedAnswerIndex !== null) return; // Đã chọn hoặc đã lộ đáp án thì không cho đổi
+            if (isRevealed || selectedAnswerIndex !== null) return; 
             
-            // Xóa chọn cũ nếu có, highlight nút mới chọn
             const oldBtn = document.getElementById(`ans-btn-${selectedAnswerIndex}`);
             if (oldBtn) oldBtn.classList.remove('border-blue-500', 'bg-blue-950/40');
 
@@ -358,13 +339,10 @@
                 currentBtn.classList.add('border-blue-500', 'bg-blue-950/40');
             }
 
-            // Ghi nhận lựa chọn lên Firebase để Admin thấy số lượng người chọn
             db.ref('room/playerChoices/' + myPlayerId).set(idx);
             
-            // Cập nhật bộ đếm số lượng thống kê trên Firebase
             db.ref('room/answersCount').transaction((counts) => {
                 if (!counts) counts = [0, 0, 0, 0];
-                // Tránh cộng dồn nếu người chơi đổi ý (ở đây khóa cứng 1 lần chọn nên an toàn)
                 counts[idx] = (counts[idx] || 0) + 1;
                 return counts;
             });
@@ -392,7 +370,6 @@
             const q = questions[currentQuestionIndex];
             const correctIdx = q.correct;
 
-            // Xử lý tính điểm cho người chơi nếu chưa phải Admin
             if (!isAdmin) {
                 const buttons = document.getElementById('answers-container').children;
                 for (let i = 0; i < buttons.length; i++) {
@@ -405,8 +382,7 @@
                 }
 
                 if (selectedAnswerIndex === correctIdx) {
-                    // Trả lời đúng: + điểm DPS
-                    const damage = 500; // Hoặc tính theo thời gian tùy ý
+                    const damage = 500; 
                     myDps += damage;
                     localStorage.setItem('boss_player_dps', myDps);
                     document.getElementById('my-dps').innerText = myDps;
@@ -418,17 +394,15 @@
 
                     db.ref('room/players/' + myPlayerId).update({ dps: myDps });
                 } else {
-                    // Trả lời sai hoặc không chọn: - điểm (hoặc chuyển màu đỏ)
                     document.body.classList.add('bg-red-950');
                     setTimeout(() => document.body.classList.remove('bg-red-950'), 400);
 
-                    myDps = Math.max(0, myDps - 200); // Trừ điểm phạt
+                    myDps = Math.max(0, myDps - 200); 
                     localStorage.setItem('boss_player_dps', myDps);
                     document.getElementById('my-dps').innerText = myDps;
                     db.ref('room/players/' + myPlayerId).update({ dps: myDps });
                 }
             } else {
-                // Giao diện Admin khi hiện đáp án
                 const buttons = document.getElementById('answers-container').children;
                 for (let i = 0; i < buttons.length; i++) {
                     if (i === correctIdx) {
@@ -437,7 +411,6 @@
                 }
             }
 
-            // Hiển thị kết quả trong vòng 10 giây rồi tự động chuyển câu tiếp theo (Admin điều phối chuyển câu)
             setTimeout(() => {
                 if (isAdmin) {
                     let nextIdx = currentQuestionIndex + 1;
@@ -449,7 +422,7 @@
                         db.ref('room/gameState').update({ status: 'ended' });
                     }
                 }
-            }, 10000); // Kéo dài thời gian xem kết quả đúng/sai là 10 giây
+            }, 10000); 
         }
 
         function listenBossHP() {
