@@ -67,7 +67,7 @@
                 Đang tải câu hỏi...
             </h3>
             <div id="answers-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Các nút đáp án được sinh tự động bằng JS -->
+                <!-- Các nút đáp án sinh tự động bằng JS -->
             </div>
         </div>
 
@@ -80,7 +80,7 @@
         </div>
     </div>
 
-    <!-- MÀN HÌNH KẾT THÚC (VICTORY / DEFEAT) -->
+    <!-- MÀN HÌNH KẾT THÚC -->
     <div id="end-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-md text-center hidden">
         <h2 id="end-title" class="game-font text-3xl font-black mb-2">CHIẾN THẮNG!</h2>
         <p id="end-subtitle" class="text-gray-400 mb-6">Boss đã bị hạ gục bởi sức mạnh đồng đội!</p>
@@ -90,7 +90,7 @@
             <div class="flex justify-between"><span class="text-gray-300">Xếp hạng chung cuộc:</span> <span id="final-rank" class="game-font font-bold text-yellow-400">#1</span></div>
         </div>
         <button onclick="location.reload()" class="w-full py-3 bg-red-600 hover:bg-red-700 game-font font-bold rounded-xl transition">
-            CHƠI LÁN KHÁC
+            CHƠI LẠI KHÁC
         </button>
     </div>
 
@@ -99,24 +99,20 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
-        // ==========================================
-        // CẤU HÌNH FIREBASE CỦA BẠN (Thay đổi phần này)
-        // ==========================================
         const firebaseConfig = {
-  apiKey: "AIzaSyCA5HKTU5jXxPvAjNjhK4G7u_B5pkEGyt8",
-  authDomain: "dautrumhutmau.firebaseapp.com",
-  databaseURL: "https://dautrumhutmau-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "dautrumhutmau",
-  storageBucket: "dautrumhutmau.firebasestorage.app",
-  messagingSenderId: "661941434079",
-  appId: "1:661941434079:web:e09b1268bea3325ebe1b6a",
-  measurementId: "G-CFFLTD8F5Z"
-};
+            apiKey: "AIzaSyCA5HKTU5jXxPvAjNjhK4G7u_B5pkEGyt8",
+            authDomain: "dautrumhutmau.firebaseapp.com",
+            databaseURL: "https://dautrumhutmau-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "dautrumhutmau",
+            storageBucket: "dautrumhutmau.firebasestorage.app",
+            messagingSenderId: "661941434079",
+            appId: "1:661941434079:web:e09b1268bea3325ebe1b6a",
+            measurementId: "G-CFFLTD8F5Z"
+        };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Danh sách câu hỏi (15 câu chuẩn bị sẵn cho game 7-8 phút)
         const questions = [
             { q: "Hợp chất nào sau đây làm quỳ tím hóa đỏ?", answers: ["NaOH", "HCl", "NaCl", "NH3"], correct: 1 },
             { q: "Kim loại nào dẫn điện tốt nhất trong bảng tuần hoàn?", answers: ["Đồng (Cu)", "Nhôm (Al)", "Bạc (Ag)", "Vàng (Au)"], correct: 2 },
@@ -135,7 +131,7 @@
             { q: "Số hiệu nguyên tử của nguyên tố Carbon (C) là mấy?", answers: ["5", "6", "7", "8"], correct: 1 }
         ];
 
-        let myPlayerId = 'p_' + Math.random().toString(36.substring(2, 9));
+        let myPlayerId = 'p_' + Math.random().toString(36).substring(2, 9);
         let myName = '';
         let myDps = 0;
         let currentQuestionIndex = 0;
@@ -154,18 +150,15 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.remove('hidden');
 
-            // Đăng ký người chơi lên Firebase Room
             const playerRef = db.ref('room/players/' + myPlayerId);
             playerRef.set({ name: myName, dps: 0 });
             playerRef.onDisconnect().remove();
 
-            // Lắng nghe tổng số lượng người chơi
             db.ref('room/players').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
                 const count = Object.keys(players).length;
                 document.getElementById('player-count').innerText = count;
 
-                // Nếu là người đầu tiên vào phòng, hiện nút Start cho phép làm Host
                 const keys = Object.keys(players);
                 if (keys.length > 0 && keys[0] === myPlayerId) {
                     document.getElementById('start-btn').classList.remove('hidden');
@@ -173,7 +166,6 @@
                 }
             });
 
-            // Lắng nghe trạng thái game bắt đầu
             db.ref('room/gameState').on('value', (snapshot) => {
                 const state = snapshot.val();
                 if (state && state.status === 'playing') {
@@ -245,38 +237,36 @@
             }
 
             if (selectedIndex === correctIndex) {
-                // Đúng: Gây sát thương Boss phụ thuộc vào tốc độ
                 const damage = timeLeft * 100 + 200;
                 myDps += damage;
                 document.getElementById('my-dps').innerText = myDps;
 
-                // Cập nhật lên Firebase Boss HP
                 db.ref('room/bossHP').transaction((currentHP) => {
                     if (currentHP === null) return 10000 - damage;
                     return Math.max(0, currentHP - damage);
                 });
 
-                // Cập nhật điểm DPS cá nhân lên Firebase
                 db.ref('room/players/' + myPlayerId).update({ dps: myDps });
             } else {
                 handleWrongAnswer();
             }
 
-            // Chuyển câu tiếp theo sau 2 giây (Chỉ host hoặc tự động đồng bộ)
             setTimeout(() => {
                 currentQuestionIndex++;
-                if (myPlayerId === Object.keys(db.ref('room/players'))[0]) { // Host điều khiển tiến trình
-                    if (currentQuestionIndex < questions.length) {
-                        db.ref('room/gameState').update({ questionIndex: currentQuestionIndex });
-                    } else {
-                        db.ref('room/gameState').update({ status: 'ended' });
+                db.ref('room/players').once('value', (snap) => {
+                    const firstPlayerId = Object.keys(snap.val() || {})[0];
+                    if (myPlayerId === firstPlayerId) {
+                        if (currentQuestionIndex < questions.length) {
+                            db.ref('room/gameState').update({ questionIndex: currentQuestionIndex });
+                        } else {
+                            db.ref('room/gameState').update({ status: 'ended' });
+                        }
                     }
-                }
+                });
             }, 2000);
         }
 
         function handleWrongAnswer() {
-            // Sai: Bị phạt giảm một phần điểm hoặc màn hình chớp đỏ
             document.body.classList.add('bg-red-950');
             setTimeout(() => document.body.classList.remove('bg-red-950'), 400);
         }
@@ -322,7 +312,7 @@
             
             document.getElementById('final-dps').innerText = myDps;
             if (isVictory) {
-                document.getElementById('end-title.innerHTML').innerText = "CHIẾN THẮNG TRÙM!";
+                document.getElementById('end-title').innerHTML = "CHIẾN THẮNG TRÙM!";
                 document.getElementById('end-title').className = "game-font text-3xl font-black mb-2 text-green-400";
                 document.getElementById('end-subtitle').innerText = "Cộng đồng đã hạ gục Hỏa Long Vương thành công!";
             } else {
