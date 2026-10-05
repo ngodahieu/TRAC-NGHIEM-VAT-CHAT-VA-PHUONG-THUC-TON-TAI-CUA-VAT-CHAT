@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đấu Trùm Hút Máu - Boss Raid Quiz 3D Dragon Animations</title>
+    <title>Đấu Trùm Hút Máu - Boss Raid Quiz 3D Fierce Dragon</title>
     <!-- Tailwind CSS qua CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Orbitron & Quicksand -->
@@ -11,53 +11,62 @@
     <style>
         body { font-family: 'Quicksand', sans-serif; background-color: #0b0f19; color: #f3f4f6; overflow-x: hidden; }
         .game-font { font-family: 'Orbitron', sans-serif; }
-        .boss-glow { text-shadow: 0 0 25px rgba(239, 68, 68, 0.9); }
-        .card-bg { background: rgba(17, 24, 39, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.12); }
+        .boss-glow { text-shadow: 0 0 30px rgba(239, 68, 68, 0.9), 0 0 60px rgba(220, 38, 38, 0.6); }
+        .card-bg { background: rgba(17, 24, 39, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.12); }
         
-        /* HIỆU ỨNG 3D DRAGON ANIMATIONS */
+        /* HIỆU ỨNG 3D DRAGON ANIMATIONS - HUNG BẠO & DỮ TỢN */
         @keyframes dragonHover {
-            0%, 100% { transform: translateY(0px) rotateX(5deg) rotateY(-5deg); }
-            50% { transform: translateY(-12px) rotateX(-5deg) rotateY(5deg); }
+            0%, 100% { transform: translateY(0px) rotateX(8deg) rotateY(-8deg) scale(1); }
+            50% { transform: translateY(-15px) rotateX(-8deg) rotateY(8deg) scale(1.03); }
         }
         .dragon-3d-container {
-            perspective: 1000px;
-            animation: dragonHover 4s ease-in-out infinite;
+            perspective: 1200px;
+            animation: dragonHover 3.5s ease-in-out infinite;
         }
 
         @keyframes wingFlapLeft {
             0%, 100% { transform: rotateZ(0deg) rotateY(0deg); }
-            50% { transform: rotateZ(-15deg) rotateY(-25deg); }
+            50% { transform: rotateZ(-20deg) rotateY(-35deg); }
         }
         @keyframes wingFlapRight {
             0%, 100% { transform: rotateZ(0deg) rotateY(0deg); }
-            50% { transform: rotateZ(15deg) rotateY(25deg); }
+            50% { transform: rotateZ(20deg) rotateY(35deg); }
         }
-        .wing-left { animation: wingFlapLeft 1.5s ease-in-out infinite; transform-origin: right center; }
-        .wing-right { animation: wingFlapRight 1.5s ease-in-out infinite; transform-origin: left center; }
+        .wing-left { animation: wingFlapLeft 1.2s ease-in-out infinite; transform-origin: right center; }
+        .wing-right { animation: wingFlapRight 1.2s ease-in-out infinite; transform-origin: left center; }
 
         @keyframes fireBreathAnim {
-            0% { transform: scale(0.2) translateY(0); opacity: 0; }
-            50% { opacity: 0.9; }
-            100% { transform: scale(1.4) translateY(90px); opacity: 0; }
+            0% { transform: scale(0.3) translateY(0); opacity: 0; }
+            40% { opacity: 0.9; }
+            100% { transform: scale(1.6) translateY(110px); opacity: 0; }
         }
-        .anim-dragon-fire { animation: fireBreathAnim 0.8s ease-out infinite; }
+        .anim-dragon-fire { animation: fireBreathAnim 0.7s ease-out infinite; }
 
         @keyframes attackSlash {
             0% { transform: scale(0.3) translate(-50px, 100px); opacity: 0; }
             50% { opacity: 1; }
-            100% { transform: scale(1.2) translate(0px, -80px); opacity: 0; }
+            100% { transform: scale(1.3) translate(0px, -90px); opacity: 0; }
         }
-        .anim-slash { animation: attackSlash 0.6s ease-out forwards; }
+        .anim-slash { animation: attackSlash 0.5s ease-out forwards; }
+
+        /* HIỆU ỨNG RỒNG PHUN LỬA VÀO NGƯỜI CHƠI KHI THUA / SAI */
+        @keyframes screenFireBlast {
+            0% { opacity: 0; transform: scale(0.6); filter: brightness(1); }
+            30% { opacity: 0.95; transform: scale(1.2); filter: brightness(1.5) hue-rotate(-20deg); }
+            100% { opacity: 0; transform: scale(1.8) translateY(120px); filter: brightness(1); }
+        }
+        .anim-screen-fire { animation: screenFireBlast 0.8s ease-out forwards; }
 
         @keyframes screenShake {
             0% { transform: translate(0, 0); }
-            20% { transform: translate(-8px, 8px); }
-            40% { transform: translate(8px, -8px); }
-            60% { transform: translate(-5px, 5px); }
-            80% { transform: translate(5px, -5px); }
+            15% { transform: translate(-12px, 12px); }
+            30% { transform: translate(12px, -12px); }
+            45% { transform: translate(-8px, 8px); }
+            60% { transform: translate(8px, -8px); }
+            80% { transform: translate(-4px, 4px); }
             100% { transform: translate(0, 0); }
         }
-        .shake { animation: screenShake 0.4s ease-in-out; }
+        .shake { animation: screenShake 0.5s ease-in-out; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
@@ -114,62 +123,107 @@
     <!-- MÀN HÌNH GAME CHÍNH -->
     <div id="game-screen" class="w-full max-w-3xl hidden">
         
-        <!-- KHU VỰC HIỂN THỊ MÔ HÌNH RỒNG 3D & ANIMATION -->
-        <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[260px] justify-center">
-            <div class="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/20 to-transparent pointer-events-none"></div>
+        <!-- KHU VỰC HIỂN THỊ MÔ HÌNH RỒNG 3D HUNG BẠO & ANIMATION -->
+        <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[290px] justify-center">
+            <div class="absolute inset-0 bg-gradient-to-b from-red-950/70 via-red-900/30 to-transparent pointer-events-none"></div>
             
-            <!-- Vùng chứa Rồng 3D SVG/CSS Chân Thực -->
+            <!-- Vùng chứa Rồng 3D SVG Siêu Dữ Tợn, Có Vẩy, Thân Dài, Đuôi & Cánh Khổng Lồ -->
             <div class="dragon-3d-container relative flex flex-col items-center z-10 my-1">
-                <svg class="w-40 h-40 filter drop-shadow-[0_0_20px_rgba(255,69,0,0.8)] select-none" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Thân rồng & Đuôi uốn lượn -->
-                    <path d="M100 140C70 140 50 110 60 80C70 50 90 40 100 30C110 40 130 50 140 80C150 110 130 140 100 140Z" fill="url(#bodyGradient)" stroke="#f97316" stroke-width="2"/>
-                    <path d="M100 130C85 150 70 170 50 175C70 180 90 160 100 130Z" fill="#b91c1c"/>
+                <svg class="w-56 h-56 filter drop-shadow-[0_0_30px_rgba(255,69,0,0.95)] select-none" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
                     
-                    <!-- Cánh Trái (Động) -->
-                    <g class="wing-left">
-                        <path d="M75 75C40 50 20 70 10 100C30 100 50 90 75 75Z" fill="#ef4444" stroke="#fef08a" stroke-width="1.5" opacity="0.9"/>
-                    </g>
-                    <!-- Cánh Phải (Động) -->
-                    <g class="wing-right">
-                        <path d="M125 75C160 50 180 70 190 100C170 100 150 90 125 75Z" fill="#ef4444" stroke="#fef08a" stroke-width="1.5" opacity="0.9"/>
-                    </g>
-
-                    <!-- Đầu Rồng 3D -->
-                    <circle cx="100" cy="55" r="25" fill="url(#headGradient)" stroke="#fbbf24" stroke-width="2"/>
-                    <!-- Sừng Rồng -->
-                    <path d="M85 40L70 20L90 35Z" fill="#fbbf24"/>
-                    <path d="M115 40L130 20L110 35Z" fill="#fbbf24"/>
-                    <!-- Mắt phát sáng dữ tợn -->
-                    <ellipse cx="90" cy="50" rx="4" ry="2.5" fill="#fef08a" class="animate-pulse"/>
-                    <ellipse cx="110" cy="50" rx="4" ry="2.5" fill="#fef08a" class="animate-pulse"/>
-                    <!-- Miệng rồng (nơi phun lửa) -->
-                    <path d="M92 65C96 70 104 70 108 65" stroke="#7f1d1d" stroke-width="3" stroke-linecap="round"/>
-
-                    <!-- Định nghĩa màu gradient 3D -->
+                    <!-- Định nghĩa màu sắc và hiệu ứng vẩy rồng -->
                     <defs>
-                        <radialGradient id="bodyGradient" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#f97316" />
-                            <stop offset="60%" stop-color="#dc2626" />
-                            <stop offset="100%" stop-color="#7f1d1d" />
+                        <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ea580c"/>
+                            <stop offset="40%" stop-color="#dc2626"/>
+                            <stop offset="80%" stop-color="#7f1d1d"/>
+                            <stop offset="100%" stop-color="#450a0a"/>
+                        </linearGradient>
+                        <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#991b1b"/>
+                            <stop offset="50%" stop-color="#450a0a"/>
+                            <stop offset="100%" stop-color="#180303"/>
+                        </linearGradient>
+                        <radialGradient id="eyeGrad" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#fef08a"/>
+                            <stop offset="60%" stop-color="#f97316"/>
+                            <stop offset="100%" stop-color="#ef4444"/>
                         </radialGradient>
-                        <radialGradient id="headGradient" cx="50%" cy="40%" r="60%">
-                            <stop offset="0%" stop-color="#fb923c" />
-                            <stop offset="70%" stop-color="#b91c1c" />
-                            <stop offset="100%" stop-color="#450a0a" />
-                        </radialGradient>
+                        <!-- Mẫu vẩy rồng sắc nhọn -->
+                        <pattern id="scalePattern" width="10" height="10" patternUnits="userSpaceOnUse">
+                            <path d="M5 0 L10 5 L5 10 L0 5 Z" fill="#991b1b" stroke="#f97316" stroke-width="0.7"/>
+                        </pattern>
                     </defs>
+
+                    <!-- Đuôi rồng dài uốn lượn sắc nhọn có gai -->
+                    <path d="M150 200C110 240 70 230 40 200C25 185 30 160 50 170C70 180 90 200 120 180C140 160 145 130 150 110Z" fill="url(#bodyGrad)" stroke="#f97316" stroke-width="2"/>
+                    <!-- Gai đuôi rồng -->
+                    <path d="M40 200L25 210L35 190Z" fill="#fbbf24"/>
+                    <path d="M55 185L45 200L55 175Z" fill="#fbbf24"/>
+                    <path d="M75 175L65 190L75 165Z" fill="#fbbf24"/>
+
+                    <!-- Thân rồng uốn lượn dài bọc vẩy -->
+                    <path d="M110 180C80 180 70 140 85 110C100 80 130 80 150 80C170 80 200 80 215 110C230 140 220 180 190 180C165 180 150 140 150 110Z" fill="url(#scalePattern)" stroke="#dc2626" stroke-width="2.5"/>
+                    <path d="M110 180C80 180 70 140 85 110C100 80 130 80 150 80C170 80 200 80 215 110C230 140 220 180 190 180C165 180 150 140 150 110Z" fill="url(#bodyGrad)" opacity="0.6"/>
+
+                    <!-- Vẩy dọc sống lưng rồng (Gai sắc nhọn) -->
+                    <path d="M150 75L143 55L150 65L157 55Z" fill="#fbbf24"/>
+                    <path d="M130 80L120 62L130 70L140 62Z" fill="#fbbf24"/>
+                    <path d="M170 80L160 62L170 70L180 62Z" fill="#fbbf24"/>
+                    <path d="M105 95L92 82L102 90L112 80Z" fill="#fbbf24"/>
+                    <path d="M195 95L188 80L198 90L208 82Z" fill="#fbbf24"/>
+
+                    <!-- Cánh Trái Khổng Lồ Dữ Tợn (Động) -->
+                    <g class="wing-left">
+                        <path d="M110 100C60 60 20 80 5 120C30 135 60 130 90 120L110 100Z" fill="url(#wingGrad)" stroke="#f97316" stroke-width="2"/>
+                        <path d="M60 90L20 115M75 105L35 140M90 115L60 160" stroke="#b91c1c" stroke-width="1.5"/>
+                        <!-- Móng vuốt cánh -->
+                        <path d="M5 120L0 128L8 123Z" fill="#fbbf24"/>
+                    </g>
+                    <!-- Cánh Phải Khổng Lồ Dữ Tợn (Động) -->
+                    <g class="wing-right">
+                        <path d="M190 100C240 60 280 80 295 120C270 135 240 130 210 120L190 100Z" fill="url(#wingGrad)" stroke="#f97316" stroke-width="2"/>
+                        <path d="M240 90L280 115M225 105L265 140M210 115L240 160" stroke="#b91c1c" stroke-width="1.5"/>
+                        <!-- Móng vuốt cánh -->
+                        <path d="M295 120L300 128L292 123Z" fill="#fbbf24"/>
+                    </g>
+
+                    <!-- Đầu Rồng 3D Hung Bạo -->
+                    <g transform="translate(150, 65)">
+                        <!-- Sừng rồng cực dài và sắc nhọn -->
+                        <path d="M -15 -10 L -45 -45 L -20 -25 Z" fill="#fbbf24" stroke="#78350f" stroke-width="1"/>
+                        <path d="M 15 -10 L 45 -45 L 20 -25 Z" fill="#fbbf24" stroke="#78350f" stroke-width="1"/>
+                        <path d="M -10 -15 L -30 -35 L -15 -25 Z" fill="#f59e0b"/>
+                        <path d="M 10 -15 L 30 -35 L 15 -25 Z" fill="#f59e0b"/>
+
+                        <!-- Giao diện đầu rồng chính -->
+                        <path d="M -22 -15 C -25 10 -15 25 0 35 C 15 25 25 10 22 -15 C 15 -25 -15 -25 -22 -15 Z" fill="url(#bodyGrad)" stroke="#f97316" stroke-width="2"/>
+                        
+                        <!-- Mắt rồng phát sáng dữ tợn -->
+                        <ellipse cx="-10" cy="-2" rx="5" ry="3" fill="url(#eyeGrad)" class="animate-pulse"/>
+                        <ellipse cx="10" cy="-2" rx="5" ry="3" fill="url(#eyeGrad)" class="animate-pulse"/>
+                        <circle cx="-10" cy="-2" r="1.5" fill="#000"/>
+                        <circle cx="10" cy="-2" r="1.5" fill="#000"/>
+
+                        <!-- Miệng rồng hầm hố & Răng nanh sắc nhọn -->
+                        <path d="M -12 22 L 0 32 L 12 22 C 6 28 -6 28 -12 22 Z" fill="#180303" stroke="#ef4444" stroke-width="1.5"/>
+                        <!-- Răng nanh -->
+                        <path d="M -8 22 L -5 28 L -2 22 Z" fill="#ffffff"/>
+                        <path d="M 8 22 L 5 28 L 2 22 Z" fill="#ffffff"/>
+                        <path d="M -3 24 L 0 29 L 3 24 Z" fill="#ffffff"/>
+                    </g>
                 </svg>
 
-                <!-- Hiệu ứng lửa phun trực tiếp từ miệng rồng -->
-                <div class="absolute top-28 w-12 h-16 bg-gradient-to-t from-transparent via-orange-500 to-yellow-300 rounded-full blur-sm anim-dragon-fire pointer-events-none"></div>
+                <!-- Hiệu ứng lửa phun liên tục từ miệng rồng -->
+                <div class="absolute top-36 w-16 h-20 bg-gradient-to-t from-transparent via-orange-500 to-yellow-300 rounded-full blur-md anim-dragon-fire pointer-events-none"></div>
             </div>
             
             <!-- Tên Boss & Trạng thái -->
-            <h2 class="game-font text-lg font-black text-red-500 boss-glow tracking-wider z-10 mt-1">HỎA LONG VƯƠNG 3D</h2>
+            <h2 class="game-font text-xl font-black text-red-500 boss-glow tracking-wider z-10 mt-1">HỎA LONG VƯƠNG 3D</h2>
             <p id="role-notice" class="text-xs text-yellow-400 font-bold mb-3 z-10">⚡ Chế độ: Người chơi tham gia chiến đấu</p>
 
-            <!-- Container hiệu ứng skill -->
-            <div id="skill-effects-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-20"></div>
+            <!-- Container hiệu ứng skill / phun lửa vào mình -->
+            <div id="skill-effects-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-30"></div>
 
             <!-- Thanh máu Boss -->
             <div class="w-full flex justify-between items-center mb-1 px-1 z-10">
@@ -277,9 +331,9 @@
         let selectedSkin = localStorage.getItem('boss_player_skin') || 'knight';
 
         const skinData = {
-            knight: { name: 'Kiếm Sĩ', icon: '⚔️', effectClass: 'anim-slash', skillIcon: '🗡️' },
-            mage: { name: 'Pháp Sư', icon: '🔮', effectClass: 'anim-slash', skillIcon: '✨' },
-            archer: { name: 'Xạ Thủ', icon: '🏹', effectClass: 'anim-slash', skillIcon: '🎯' }
+            knight: { name: 'Kiếm Sĩ', icon: '⚔️', skillIcon: '🗡️' },
+            mage: { name: 'Pháp Sư', icon: '🔮', skillIcon: '✨' },
+            archer: { name: 'Xạ Thủ', icon: '🏹', skillIcon: '🎯' }
         };
 
         const questions = [
@@ -587,13 +641,13 @@
             const effectEl = document.createElement('div');
             
             if (isCorrect) {
-                effectEl.className = "absolute text-4xl anim-slash z-30 pointer-events-none";
+                effectEl.className = "absolute text-4xl anim-slash z-40 pointer-events-none";
                 effectEl.innerHTML = skinData[selectedSkin].skillIcon;
                 container.appendChild(effectEl);
 
                 setTimeout(() => {
                     const dmgText = document.createElement('div');
-                    dmgText.className = "absolute text-green-400 font-black text-lg game-font z-30 animate-bounce";
+                    dmgText.className = "absolute text-green-400 font-black text-lg game-font z-40 animate-bounce";
                     dmgText.style.top = "30%";
                     dmgText.innerText = "-500 DPS!";
                     container.appendChild(dmgText);
@@ -601,25 +655,26 @@
                 }, 300);
 
             } else {
-                effectEl.className = "absolute text-4xl anim-boss-fire z-30 pointer-events-none";
-                effectEl.innerHTML = "🔥";
+                // HIỆU ỨNG RỒNG PHUN LỬA TRỰC TIẾP VÀO MẶT NGƯỜI CHƠI KHI THUA / TRẢ LỜI SAI
+                effectEl.className = "absolute inset-0 bg-gradient-to-t from-red-600 via-orange-500 to-transparent opacity-90 anim-screen-fire z-40 pointer-events-none flex items-center justify-center";
+                effectEl.innerHTML = `<div class="text-6xl animate-bounce">🔥🐉🔥</div>`;
                 container.appendChild(effectEl);
 
                 const battlefield = document.getElementById('battlefield');
                 battlefield.classList.add('shake');
-                setTimeout(() => battlefield.classList.remove('shake'), 400);
+                setTimeout(() => battlefield.classList.remove('shake'), 500);
 
                 setTimeout(() => {
                     const dmgText = document.createElement('div');
-                    dmgText.className = "absolute text-red-500 font-black text-lg game-font z-30 animate-pulse";
-                    dmgText.style.bottom = "20%";
-                    dmgText.innerText = "PHẠT -200 DPS!";
+                    dmgText.className = "absolute text-red-200 bg-red-950/95 border-2 border-red-500 px-4 py-2 rounded-xl font-black text-lg game-font z-50 animate-pulse shadow-2xl";
+                    dmgText.style.top = "35%";
+                    dmgText.innerText = "🔥 HỎA LONG PHUN LỬA! -200 DPS!";
                     container.appendChild(dmgText);
-                    setTimeout(() => dmgText.remove(), 700);
-                }, 300);
+                    setTimeout(() => dmgText.remove(), 1200);
+                }, 200);
             }
 
-            setTimeout(() => effectEl.remove(), 600);
+            setTimeout(() => effectEl.remove(), 800);
         }
 
         function triggerRevealState() {
@@ -656,8 +711,6 @@
                     db.ref('room/players/' + myPlayerId).update({ dps: myDps });
                 } else {
                     playAttackAnimation(false);
-                    document.body.classList.add('bg-red-950');
-                    setTimeout(() => document.body.classList.remove('bg-red-950'), 400);
 
                     myDps = Math.max(0, myDps - 200); 
                     localStorage.setItem('boss_player_dps', myDps);
