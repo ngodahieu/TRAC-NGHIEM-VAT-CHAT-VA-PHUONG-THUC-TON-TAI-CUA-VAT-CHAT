@@ -213,7 +213,7 @@
             <div class="w-full flex justify-between items-center mt-3 text-xs text-gray-300 px-1 border-t border-gray-800 pt-2 z-10">
                 <span>Câu hỏi: <span id="current-q-num" class="text-white font-bold">1</span>/15</span>
                 <span>Thời gian: <span id="timer" class="text-yellow-400 font-bold text-sm">12s</span></span>
-                <span id="my-dps-container">DPS: <span id="my-dps" class="text-green-400 font-bold">0</span></span>
+                <span id="my-dps-container">Điểm Tích Lũy: <span id="my-dps" class="text-green-400 font-bold">0</span></span>
             </div>
         </div>
 
@@ -831,7 +831,6 @@
                 totalActivePlayers = Math.max(1, Object.keys(players).length);
                 document.getElementById('player-count').innerText = totalActivePlayers;
                 
-                // Máu boss tính tự động: 1 người 7500, 10 người 75k, 100 người 750k...
                 dynamicMaxHP = totalActivePlayers * 7500;
                 document.getElementById('preview-boss-hp').innerText = dynamicMaxHP.toLocaleString();
             });
@@ -889,6 +888,7 @@
                 db.ref('room/bossHP').set(dynamicMaxHP);
                 db.ref('room/answersCount').set([0, 0, 0, 0]);
                 db.ref('room/playerChoices').remove();
+                db.ref('room/answerTimestamps').remove();
             });
         }
 
@@ -1006,6 +1006,13 @@
 
             db.ref('room/playerChoices/' + myPlayerId).set(idx);
             
+            // Ghi nhận thời gian bấm chính xác (lấy server timestamp)
+            db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
+                const offset = offsetSnap.val() || 0;
+                const serverTimeNow = Date.now() + offset;
+                db.ref('room/answerTimestamps/' + myPlayerId).set(serverTimeNow);
+            });
+            
             db.ref('room/answersCount').transaction((counts) => {
                 if (!counts) counts = [0, 0, 0, 0];
                 counts[idx] = (counts[idx] || 0) + 1;
@@ -1065,7 +1072,7 @@
                     const dmgText = document.createElement('div');
                     dmgText.className = "absolute text-green-400 font-bold text-2xl game-font z-45 animate-bounce";
                     dmgText.style.top = "35%";
-                    dmgText.innerText = "CHÍ MẠNG & BUFF SÁT THƯƠNG!";
+                    dmgText.innerText = "TRẢ LỜI ĐÚNG & NHẬN ĐIỂM TỐC ĐỘ!";
                     container.appendChild(dmgText);
                     setTimeout(() => dmgText.remove(), 900);
                 }, 350);
@@ -1086,7 +1093,7 @@
                     const dmgText = document.createElement('div');
                     dmgText.className = "absolute text-red-200 bg-red-950/95 border-2 border-red-500 px-4 py-2 rounded-xl font-bold text-lg game-font z-50 animate-pulse shadow-2xl";
                     dmgText.style.top = "35%";
-                    dmgText.innerText = "🔥 HỎA LONG PHUN LỬA! KÍCH HOẠT BUFF CHO ĐỒNG ĐỘI!";
+                    dmgText.innerText = "🔥 HỎA LONG PHUN LỬA! ĐÁP ÁN CHƯA CHÍNH XÁC!";
                     container.appendChild(dmgText);
                     setTimeout(() => dmgText.remove(), 1200);
                 }, 200);
@@ -1114,45 +1121,58 @@
                     }
                 }
 
-                // Kiểm tra xem cá nhân đúng hay sai và tính sát thương linh hoạt theo số người sai để chia đều
-                db.ref('room/playerChoices').once('value', (snapshot) => {
-                    const allChoices = snapshot.val() || {};
-                    let totalWrongCount = 0;
-                    let totalCorrectCount = 0;
+                // Tính điểm dựa trên tốc độ bấm đúng (hạng 1 = 1000 điểm, hạng 100 = 100 điểm)
+                db.ref('room/playerChoices').once('value').then((choicesSnap) => {
+                    db.ref('room/answerTimestamps').once('value').then((timeSnap) => {
+                        const allChoices = choicesSnap.val() || {};
+                        const allTimes = timeSnap.val() || {};
 
-                    Object.values(allChoices).forEach(choice => {
-                        if (choice === correctIdx) totalCorrectCount++;
-                        else totalWrongCount++;
-                    });
-                    if (totalCorrectCount === 0) totalCorrectCount = 1;
-
-                    // Cơ chế: Mỗi người sai sẽ tạo ra phần thưởng sát thương bổ sung cộng dồn cho mỗi người đúng chia đều
-                    let baseDamagePerPerson = 500;
-                    let extraBuffDamage = totalWrongCount * 150; 
-                    let totalDamageForThisCorrectPerson = baseDamagePerPerson + Math.floor(extraBuffDamage / totalCorrectCount);
-
-                    if (selectedAnswerIndex === correctIdx) {
-                        playAttackAnimation(true);
-                        myDps += totalDamageForThisCorrectPerson;
-                        myCorrectCount += 1;
-                        localStorage.setItem('boss_player_dps', myDps);
-                        localStorage.setItem('boss_player_correct', myCorrectCount);
-                        document.getElementById('my-dps').innerText = myDps;
-
-                        db.ref('room/bossHP').transaction((currentHP) => {
-                            if (currentHP === null) return 0;
-                            return Math.max(0, currentHP - totalDamageForThisCorrectPerson);
+                        // Lọc ra danh sách những người trả lời ĐÚNG và sắp xếp theo thời gian bấm nhanh nhất
+                        let correctPlayers = [];
+                        Object.keys(allChoices).forEach(pId => {
+                            if (allChoices[pId] === correctIdx) {
+                                correctPlayers.push({
+                                    id: pId,
+                                    time: allTimes[pId] || 9999999999999
+                                });
+                            }
                         });
 
-                        db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
-                    } else {
-                        playAttackAnimation(false);
-                        // Người trả lời sai không bị trừ điểm gốc quá sâu, đảm bảo cân bằng game
-                        myDps = Math.max(0, myDps - 100); 
-                        localStorage.setItem('boss_player_dps', myDps);
-                        document.getElementById('my-dps').innerText = myDps;
-                        db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
-                    }
+                        correctPlayers.sort((a, b) => a.time - b.time);
+
+                        // Tìm vị trí (rank) của người chơi hiện tại trong nhóm trả lời đúng
+                        let myCorrectRank = correctPlayers.findIndex(p => p.id === myPlayerId) + 1;
+                        let questionScoreEarned = 0;
+
+                        if (selectedAnswerIndex === correctIdx && myCorrectRank > 0) {
+                            playAttackAnimation(true);
+
+                            // Tính điểm theo công thức từ 1000 (hạng 1) đến 100 (hạng 100)
+                            if (myCorrectRank === 1) {
+                                questionScoreEarned = 1000;
+                            } else if (myCorrectRank >= 100) {
+                                questionScoreEarned = 100;
+                            } else {
+                                // Tuy tuyến tính từ hạng 1 đến 100: 1000 - (rank - 1) * (900 / 99)
+                                questionScoreEarned = Math.round(1000 - (myCorrectRank - 1) * (900 / 99));
+                            }
+
+                            myDps += questionScoreEarned;
+                            myCorrectCount += 1;
+                            localStorage.setItem('boss_player_dps', myDps);
+                            localStorage.setItem('boss_player_correct', myCorrectCount);
+                            document.getElementById('my-dps').innerText = myDps;
+
+                            db.ref('room/bossHP').transaction((currentHP) => {
+                                if (currentHP === null) return 0;
+                                return Math.max(0, currentHP - questionScoreEarned);
+                            });
+
+                            db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
+                        } else {
+                            playAttackAnimation(false);
+                        }
+                    });
                 });
 
             } else {
@@ -1174,6 +1194,7 @@
 
                             db.ref('room/answersCount').set([0, 0, 0, 0]);
                             db.ref('room/playerChoices').remove();
+                            db.ref('room/answerTimestamps').remove();
                             db.ref('room/gameState').update({ 
                                 questionIndex: nextIdx, 
                                 revealed: false,
@@ -1222,7 +1243,7 @@
                     sorted.forEach((p, index) => {
                         const row = document.createElement('div');
                         row.className = "flex justify-between items-center bg-gray-900/40 px-3 py-1.5 rounded-lg";
-                        row.innerHTML = `<span>#${index + 1} 🛡 ${p.name}</span> <span class="font-bold text-green-400">${p.dps} DPS (${p.correct || 0}/15 đúng)</span>`;
+                        row.innerHTML = `<span>#${index + 1} 🛡 ${p.name}</span> <span class="font-bold text-green-400">${p.dps} điểm (${p.correct || 0}/15 đúng)</span>`;
                         lbContainer.appendChild(row);
                     });
                 } else {
@@ -1238,8 +1259,8 @@
                     const row = document.createElement('div');
                     row.className = "bg-gray-900/60 p-3 rounded-xl border border-gray-800 text-center space-y-1";
                     row.innerHTML = `
-                        <div class="text-xs text-gray-300">Bạn đang nằm trong nhóm: <span class="game-font text-yellow-400 font-bold text-base">TOP ${topTier}</span></div>
-                        <div class="text-xs">Điểm của bạn: <span class="text-green-400 font-bold">${myDps} DPS</span> | Điểm cao nhất trong Top ${topTier}: <span class="text-red-400 font-bold">${maxScoreInTier} DPS</span></div>
+                        <div class="text-xs text-gray-300">Thứ hạng của bạn: <span class="game-font text-yellow-400 font-bold text-base">#${myRank}</span></div>
+                        <div class="text-xs">Điểm tích lũy: <span class="text-green-400 font-bold">${myDps} điểm</span> | Cao nhất: <span class="text-red-400 font-bold">${maxScoreInTier} điểm</span></div>
                     `;
                     lbContainer.appendChild(row);
                 }
@@ -1289,7 +1310,7 @@
                             <div class="w-full bg-black/60 border border-yellow-400/80 rounded-lg py-1.5 px-1 mb-1 shadow-md">
                                 <span class="font-bold text-xs text-yellow-300 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] truncate block w-full">🛡️ ${item.data.name}</span>
                             </div>
-                            <span class="text-[11px] text-yellow-200 font-bold">${item.data.dps} DPS</span>
+                            <span class="text-[11px] text-yellow-200 font-bold">${item.data.dps} điểm</span>
                             <span class="text-[10px] text-gray-100">${item.data.correct || 0}/15 đúng</span>
                         `;
                         podiumContainer.appendChild(pCard);
@@ -1311,7 +1332,7 @@
                             </div>
                             <div class="flex items-center space-x-4">
                                 <span class="text-xs text-yellow-400 font-bold">${p.correct || 0}/15 câu đúng</span>
-                                <span class="font-bold text-green-400 game-font">${p.dps.toLocaleString()} DPS</span>
+                                <span class="font-bold text-green-400 game-font">${p.dps.toLocaleString()} điểm</span>
                             </div>
                         `;
                         finalLb.appendChild(row);
