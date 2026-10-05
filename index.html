@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đấu Trùm Hút Máu - Boss Raid Quiz Dragon</title>
+    <title>Đấu Trùm Hút Máu - Boss Raid Quiz Triết Học</title>
     <!-- Tailwind CSS qua CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Three.js cho mô hình chiến binh 3D -->
@@ -77,7 +77,7 @@
     <!-- MÀN HÌNH ĐĂNG NHẬP & TÙY CHỈNH NHÂN VẬT 3D -->
     <div id="login-screen" class="card-bg p-6 rounded-2xl shadow-2xl w-full max-w-2xl text-center">
         <h1 class="game-font text-3xl font-bold text-red-500 mb-1 boss-glow">ĐẤU TRÙM HÚT MÁU</h1>
-        <p class="text-gray-300 mb-4 text-sm">Thiết kế chiến binh 3D nâng cấp của bạn trước khi bước vào đại chiến!</p>
+        <p class="text-gray-300 mb-4 text-sm">Thiết kế chiến binh 3D nâng cấp của bạn trước khi bước vào đại chiến Triết học!</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
             <!-- Khu vực hiển thị khung 3D tùy chỉnh nhân vật -->
@@ -212,7 +212,7 @@
 
             <div class="w-full flex justify-between items-center mt-3 text-xs text-gray-300 px-1 border-t border-gray-800 pt-2 z-10">
                 <span>Câu hỏi: <span id="current-q-num" class="text-white font-bold">1</span>/15</span>
-                <span>Thời gian: <span id="timer" class="text-yellow-400 font-bold text-sm">12s</span></span>
+                <span>Thời gian: <span id="timer" class="text-yellow-400 font-bold text-sm">30s</span></span>
                 <span id="my-dps-container">Điểm Tích Lũy: <span id="my-dps" class="text-green-400 font-bold">0</span></span>
             </div>
         </div>
@@ -729,22 +729,158 @@
             if (gameRenderer && gameScene && gameCamera) gameRenderer.render(gameScene, gameCamera);
         }
 
+        // 15 câu hỏi Triết học Mác - Lênin (Trích từ Document2.docx)
         const questions = [
-            { q: "Hợp chất nào sau đây làm quỳ tím hóa đỏ?", answers: ["NaOH", "HCl", "NaCl", "NH3"], correct: 1 },
-            { q: "Kim loại nào dẫn điện tốt nhất trong bảng tuần hoàn?", answers: ["Đồng (Cu)", "Nhôm (Al)", "Bạc (Ag)", "Vàng (Au)"], correct: 2 },
-            { q: "Khí nào chiếm tỉ lệ thể tích lớn nhất trong không khí?", answers: ["Oxy (O2)", "Nitơ (N2)", "Cacbonic (CO2)", "Hydro (H2)"], correct: 1 },
-            { q: "Công thức hóa học của Đường mía (Saccharose) là gì?", answers: ["C6H12O6", "C12H22O11", "(C6H10O5)n", "CH3COOH"], correct: 1 },
-            { q: "Dung dịch làm đổi màu phenolphtalein từ không màu sang hồng là?", answers: ["Axit clohydric", "Natri hidroxit", "Natri clorua", "Rượu etylic"], correct: 1 },
-            { q: "Quặng bauxite là nguyên liệu chính để sản xuất kim loại nào?", answers: ["Sắt", "Đồng", "Nhôm", "Kẽm"], correct: 2 },
-            { q: "Nhiệt độ sôi của nước ở áp suất tiêu chuẩn là bao nhiêu?", answers: ["90°C", "100°C", "110°C", "80°C"], correct: 1 },
-            { q: "Chất nào được mệnh danh là 'vàng đen'?", answers: ["Than đá", "Dầu mỏ", "Kim cương đen", "Asphalt"], correct: 1 },
-            { q: "Trong các kim loại sau, kim loại nào tác dụng với nước ở nhiệt độ thường?", answers: ["Fe", "Cu", "Na", "Ag"], correct: 2 },
-            { q: "pH của dung dịch axit mạnh thường nằm trong khoảng nào?", answers: ["Từ 0 đến gần 7", "Đúng bằng 7", "Từ trên 7 đến 14", "Bằng 14"], correct: 0 },
-            { q: "Đâu là tên gọi của axit có trong giấm ăn?", answers: ["Axit formic", "Axit acetic", "Axit sulfuric", "Axit nitric"], correct: 1 },
-            { q: "Kim loại nào ở trạng thái lỏng ở điều kiện thường?", answers: ["Sắt", "Thủy ngân", "Bạc", "Kẽm"], correct: 1 },
-            { q: "Hiện tượng mưa axit chủ yếu do khí nào gây ra?", answers: ["CO2 và CH4", "SO2 và NOx", "O3 và CFC", "NH3 và H2S"], correct: 1 },
-            { q: "Chất nào sau đây không dẫn điện?", answers: ["Nước muối", "Dung dịch NaOH", "Nước cất", "Axit sunfuric loãng"], correct: 2 },
-            { q: "Số hiệu nguyên tử của nguyên tố Carbon (C) là mấy?", answers: ["5", "6", "7", "8"], correct: 1 }
+            { 
+                q: "Hạn chế lớn nhất của quan niệm duy vật trước Mác về vật chất là gì?", 
+                answers: [
+                    "Đồng nhất vật chất với vật thể, không hiểu bản chất của vật chất với tư cách là phạm trù triết học", 
+                    "Phủ nhận sự tồn tại khách quan của vật chất", 
+                    "Cho rằng vật chất là sản phẩm của ý thức", 
+                    "Thừa nhận vật chất tồn tại vĩnh viễn"
+                ], 
+                correct: 0 
+            },
+            { 
+                q: "Vào cuối thế kỷ XIX – đầu thế kỷ XX, những phát minh nào trong khoa học tự nhiên đã làm lung lay quan niệm siêu hình về vật chất?", 
+                answers: [
+                    "Thuyết tương đối, cơ học lượng tử", 
+                    "Phát hiện tia X, hiện tượng phóng xạ, tìm ra điện tử", 
+                    "Thuyết tiến hóa, học thuyết tế bào", 
+                    "Định luật bảo toàn và chuyển hóa năng lượng"
+                ], 
+                correct: 1 
+            },
+            { 
+                q: "Trước khi chủ nghĩa duy vật biện chứng ra đời, nhìn chung các nhà triết học duy vật quan niệm vật chất là gì?", 
+                answers: [
+                    "Là một phạm trù triết học dùng để chỉ thực tại khách quan", 
+                    "Là một hay một số chất tự có, đầu tiên, được coi là những chất “giới hạn tột cùng”", 
+                    "Là sản phẩm của ý thức con người", 
+                    "Là tổng hợp của không gian và thời gian"
+                ], 
+                correct: 1 
+            },
+            { 
+                q: "Theo Lênin, khi nói “vật chất đang tiêu tan”, ý nghĩa thực sự là gì?", 
+                answers: [
+                    "Vật chất thực sự biến mất", 
+                    "Giới hạn hiểu biết của con người về vật chất đang mở rộng, những thuộc tính trước đây tưởng là bất biến nay trở thành tương đối", 
+                    "Vật chất chỉ là ảo ảnh", 
+                    "Không có vật chất trên thực tế"
+                ], 
+                correct: 1 
+            },
+            { 
+                q: "Cuộc khủng hoảng vật lý học cuối thế kỷ XIX – đầu thế kỷ XX đã đặt ra yêu cầu gì đối với triết học?", 
+                answers: [
+                    "Phủ nhận sự tồn tại của vật chất", 
+                    "Cần có một định nghĩa mới khoa học và toàn diện về phạm trù vật chất", 
+                    "Quay trở về quan niệm duy vật cổ đại", 
+                    "Thừa nhận vật chất là sản phẩm của ý thức"
+                ], 
+                correct: 1 
+            },
+            { 
+                q: "V.I. Lênin đã rút ra kết luận gì từ cuộc khủng hoảng vật lý học?", 
+                answers: [
+                    "Vật chất là nguyên tử", 
+                    "Cần phân biệt vật chất với tư cách là phạm trù triết học với các quan niệm của khoa học tự nhiên về cấu trúc cụ thể của vật chất", 
+                    "Vật chất không tồn tại", 
+                    "Khoa học tự nhiên không có vai trò gì đối với triết học"
+                ], 
+                correct: 1 
+            },
+            { 
+                q: "Theo định nghĩa của V.I. Lênin, vật chất là gì?", 
+                answers: [
+                    "Vật chất là nguyên tử", 
+                    "Vật chất là một phạm trù triết học dùng để chỉ thực tại khách quan được đem lại cho con người trong cảm giác, được cảm giác của chúng ta chép lại, chụp lại, phản ánh và tồn tại không lệ thuộc vào cảm giác", 
+                    "Vật chất là đất, nước, lửa, không khí", 
+                    "Vật chất là sản phẩm của ý thức con người"
+                ], 
+                correct: 1 
+            },
+            { 
+                q: "Định nghĩa vật chất của Lênin đã giải quyết vấn đề cơ bản của triết học như thế nào?", 
+                answers: [
+                    "Khẳng định ý thức có trước vật chất", 
+                    "Khẳng định vật chất có trước và quyết định ý thức, đồng thời thừa nhận khả năng nhận thức thế giới của con người", 
+                    "Phủ nhận sự tồn tại của vật chất", 
+                    "Cho rằng vật chất và ý thức song song tồn tại"
+                ], 
+                correct: 1 
+            },
+            { 
+                q: "Ý nghĩa khoa học quan trọng nhất của định nghĩa vật chất của Lênin là gì?", 
+                answers: [
+                    "Đưa ra một định nghĩa hoàn chỉnh về vật chất", 
+                    "Khắc phục triệt để hạn chế của chủ nghĩa duy vật siêu hình và chủ nghĩa duy tâm, tạo cơ sở lý luận cho nhận thức khoa học", 
+                    "Phủ nhận vai trò của khoa học tự nhiên", 
+                    "Thay thế các định nghĩa khoa học tự nhiên về vật chất"
+                ], 
+                correct: 1 
+            },
+            { 
+                q: "Theo quan điểm của chủ nghĩa duy vật biện chứng, vận động được hiểu như thế nào?", 
+                answers: [
+                    "Vận động chỉ là sự thay đổi vị trí trong không gian", 
+                    "Vận động là mọi sự biến đổi nói chung của các sự vật và hiện tượng trong giới tự nhiên và đời sống xã hội", 
+                    "Vận động là sự di chuyển cơ học của vật thể", 
+                    "Vận động là sự biến đổi do ý thức con người tạo ra"
+                ], 
+                correct: 1 
+            },
+            { 
+                q: "Vận động có vai trò như thế nào đối với vật chất?", 
+                answers: [
+                    "Vận động là thuộc tính vốn có, là phương thức tồn tại của vật chất", 
+                    "Vận động là hiện tượng tạm thời của vật chất", 
+                    "Vận động là sản phẩm của ý thức", 
+                    "Vận động không liên quan đến vật chất"
+                ], 
+                correct: 0 
+            },
+            { 
+                q: "Theo quan điểm duy vật biện chứng, có thể có một dạng vật chất nào tồn tại bên ngoài không gian và thời gian không?", 
+                answers: [
+                    "Có, đó là ý thức", 
+                    "Có, đó là tinh thần", 
+                    "Không, không có một dạng vật chất nào tồn tại bên ngoài không gian và thời gian", 
+                    "Có, đó là Thượng đế"
+                ], 
+                correct: 2 
+            },
+            { 
+                q: "Theo quan điểm của chủ nghĩa duy vật biện chứng, thế giới thống nhất ở điểm nào?", 
+                answers: [
+                    "Thống nhất ở tính vật chất", 
+                    "Thống nhất ở tính tinh thần", 
+                    "Thống nhất ở ý thức", 
+                    "Thống nhất ở Thượng đế"
+                ], 
+                correct: 0 
+            },
+            { 
+                q: "Cơ sở khoa học nào đã chứng minh tính thống nhất vật chất của thế giới?", 
+                answers: [
+                    "Thuyết tiến hóa, học thuyết tế bào, định luật bảo toàn và chuyển hóa năng lượng", 
+                    "Thuyết tương đối, cơ học lượng tử", 
+                    "Cả A và B đều đúng", 
+                    "Không có cơ sở khoa học nào"
+                ], 
+                correct: 2 
+            },
+            { 
+                q: "Theo quan điểm duy vật biện chứng, ý thức có phải là một thế giới tồn tại độc lập với thế giới vật chất không?", 
+                answers: [
+                    "Có, ý thức là một thế giới độc lập", 
+                    "Không, ý thức là sản phẩm của bộ óc con người, là thuộc tính của một dạng vật chất đặc biệt", 
+                    "Có, ý thức tồn tại song song với vật chất", 
+                    "Không, vì ý thức không tồn tại"
+                ], 
+                correct: 1 
+            }
         ];
 
         let myPlayerId = localStorage.getItem('boss_player_id') || ('p_' + Math.random().toString(36).substring(2, 9));
@@ -977,7 +1113,7 @@
                 function updateTimer() {
                     const serverNow = Date.now() + offset;
                     const elapsedSeconds = Math.floor((serverNow - (startTime || serverNow)) / 1000);
-                    let timeLeft = Math.max(0, 12 - elapsedSeconds);
+                    let timeLeft = Math.max(0, 30 - elapsedSeconds); // Cập nhật thời gian thành 30s
 
                     document.getElementById('timer').innerText = timeLeft + 's';
 
@@ -1006,7 +1142,6 @@
 
             db.ref('room/playerChoices/' + myPlayerId).set(idx);
             
-            // Ghi nhận thời gian bấm chính xác (lấy server timestamp)
             db.ref('.info/serverTimeOffset').once('value').then((offsetSnap) => {
                 const offset = offsetSnap.val() || 0;
                 const serverTimeNow = Date.now() + offset;
@@ -1121,13 +1256,11 @@
                     }
                 }
 
-                // Tính điểm dựa trên tốc độ bấm đúng (hạng 1 = 1000 điểm, hạng 100 = 100 điểm)
                 db.ref('room/playerChoices').once('value').then((choicesSnap) => {
                     db.ref('room/answerTimestamps').once('value').then((timeSnap) => {
                         const allChoices = choicesSnap.val() || {};
                         const allTimes = timeSnap.val() || {};
 
-                        // Lọc ra danh sách những người trả lời ĐÚNG và sắp xếp theo thời gian bấm nhanh nhất
                         let correctPlayers = [];
                         Object.keys(allChoices).forEach(pId => {
                             if (allChoices[pId] === correctIdx) {
@@ -1140,20 +1273,18 @@
 
                         correctPlayers.sort((a, b) => a.time - b.time);
 
-                        // Tìm vị trí (rank) của người chơi hiện tại trong nhóm trả lời đúng
                         let myCorrectRank = correctPlayers.findIndex(p => p.id === myPlayerId) + 1;
                         let questionScoreEarned = 0;
 
                         if (selectedAnswerIndex === correctIdx && myCorrectRank > 0) {
                             playAttackAnimation(true);
 
-                            // Tính điểm theo công thức từ 1000 (hạng 1) đến 100 (hạng 100)
+                            // Tính điểm tích lũy cá nhân dựa trên tốc độ
                             if (myCorrectRank === 1) {
                                 questionScoreEarned = 1000;
                             } else if (myCorrectRank >= 100) {
                                 questionScoreEarned = 100;
                             } else {
-                                // Tuy tuyến tính từ hạng 1 đến 100: 1000 - (rank - 1) * (900 / 99)
                                 questionScoreEarned = Math.round(1000 - (myCorrectRank - 1) * (900 / 99));
                             }
 
@@ -1163,12 +1294,19 @@
                             localStorage.setItem('boss_player_correct', myCorrectCount);
                             document.getElementById('my-dps').innerText = myDps;
 
+                            db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
+
+                            // Tính sát thương gây lên boss: Base = 500, cộng thêm % bù đắp nếu ít người trả lời đúng
+                            let baseDamage = 500;
+                            let activeCount = Math.max(1, totalActivePlayers);
+                            let correctCountNum = Math.max(1, correctPlayers.length);
+                            let scaledBossDamage = Math.round(baseDamage * (activeCount / correctCountNum));
+
                             db.ref('room/bossHP').transaction((currentHP) => {
                                 if (currentHP === null) return 0;
-                                return Math.max(0, currentHP - questionScoreEarned);
+                                return Math.max(0, currentHP - scaledBossDamage);
                             });
 
-                            db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
                         } else {
                             playAttackAnimation(false);
                         }
