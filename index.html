@@ -88,16 +88,16 @@
         </button>
     </div>
 
-    <!-- MÀN HÌNH ĐĂNG NHẬP & TÙY CHỈNH NHÂN VẬT 3D NÂNG CẤP -->
+    <!-- MÀN HÌNH ĐĂNG NHẬP & TÙY CHỈNH NHÂN VẬT 3D -->
     <div id="login-screen" class="card-bg p-6 rounded-2xl shadow-2xl w-full max-w-2xl text-center">
         <h1 class="game-font text-3xl font-bold text-red-500 mb-1 boss-glow">ĐẤU TRÙM HÚT MÁU</h1>
         <p class="text-gray-300 mb-4 text-sm">Tạo hình chiến binh 3D cao cấp với phong cách anime/RPG hoành tráng!</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-            <!-- Khu vực khung 3D xem trước nhân vật 360 độ -->
-            <div class="relative w-full h-72 bg-gradient-to-b from-gray-900 to-gray-950 rounded-xl border border-red-500/40 overflow-hidden shadow-inner flex items-center justify-center">
+            <!-- Khu vực khung 3D xem trước nhân vật 360 độ (Đã đổi sang nền trắng xám) -->
+            <div class="relative w-full h-72 bg-gradient-to-b from-gray-200 to-gray-300 rounded-xl border-2 border-yellow-500/60 overflow-hidden shadow-inner flex items-center justify-center">
                 <div id="avatar-canvas-container" class="w-full h-full cursor-grab"></div>
-                <div class="absolute bottom-2 left-2 bg-black/70 px-2 py-1 rounded text-[10px] text-yellow-400 font-bold border border-yellow-500/30">🖱️ Xoay để xem 360°</div>
+                <div class="absolute bottom-2 left-2 bg-gray-900/80 px-2 py-1 rounded text-[10px] text-yellow-400 font-bold border border-yellow-500/30">🖱️ Xoay để xem 360°</div>
             </div>
 
             <!-- Bảng tùy chỉnh ngoại hình & lớp nhân vật -->
@@ -173,7 +173,8 @@
     <!-- MÀN HÌNH CHỜ (LOBBY) -->
     <div id="lobby-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-xl text-center hidden">
         <div class="flex justify-center mb-4">
-            <div id="lobby-avatar-container" class="w-36 h-36 bg-gray-950 rounded-2xl border-2 border-yellow-500/60 overflow-hidden shadow-xl"></div>
+            <!-- Nền trắng xám cho Avatar ở phòng chờ -->
+            <div id="lobby-avatar-container" class="w-36 h-36 bg-gradient-to-b from-gray-200 to-gray-300 rounded-2xl border-2 border-yellow-500/60 overflow-hidden shadow-xl"></div>
         </div>
         <h2 class="game-font text-2xl font-bold text-yellow-400 mb-1">PHÒNG CHỜ CHIẾN BINH</h2>
         <p class="text-gray-300 mb-4 text-sm">Đang đợi các đồng đội sẵn sàng tham gia đại chiến...</p>
@@ -194,8 +195,8 @@
         <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[300px] justify-center">
             <div class="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/20 to-transparent pointer-events-none"></div>
             
-            <!-- Khung nhân vật mini 3D hiển thị biểu cảm & hoạt ảnh -->
-            <div id="mini-avatar-wrapper" class="absolute top-3 left-3 w-28 h-32 bg-gray-950 border-2 border-green-500/80 rounded-xl overflow-hidden shadow-2xl z-30 flex flex-col items-center transition-all duration-300">
+            <!-- Khung nhân vật mini 3D trong game (Đã đổi sang nền trắng xám) -->
+            <div id="mini-avatar-wrapper" class="absolute top-3 left-3 w-28 h-32 bg-gradient-to-b from-gray-200 to-gray-300 border-2 border-green-500/80 rounded-xl overflow-hidden shadow-2xl z-30 flex flex-col items-center transition-all duration-300">
                 <div id="game-avatar-container" class="w-full h-24"></div>
                 <div class="w-full bg-gray-900 text-[9px] text-green-300 text-center font-bold py-0.5 truncate px-1" id="mini-player-name">Chiến Binh</div>
             </div>
@@ -579,32 +580,27 @@
             animate3D();
         }
 
-        // Mô hình 3D Nhân Vật & Vũ Khí Nâng Cấp Chất Lượng Cao (Phong cách RPG Anime)
         function createAdvancedAvatarModel(config) {
             const group = new THREE.Group();
 
-            // Thân áo giáp chính
             const bodyGeo = new THREE.BoxGeometry(0.75, 0.85, 0.4);
             const bodyMat = new THREE.MeshStandardMaterial({ color: config.outfit, roughness: 0.25, metalness: 0.4 });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             body.position.y = 0.05;
             group.add(body);
 
-            // Thắt lưng chiến binh vàng kim
             const beltGeo = new THREE.BoxGeometry(0.78, 0.12, 0.42);
             const beltMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.7, roughness: 0.3 });
             const belt = new THREE.Mesh(beltGeo, beltMat);
             belt.position.y = -0.32;
             group.add(belt);
 
-            // Áo choàng phía sau lưng (Cape)
             const capeGeo = new THREE.BoxGeometry(0.7, 0.95, 0.05);
             const capeMat = new THREE.MeshStandardMaterial({ color: config.hairColor, roughness: 0.6 });
             const cape = new THREE.Mesh(capeGeo, capeMat);
             cape.position.set(0, 0.05, -0.23);
             group.add(cape);
 
-            // Giáp vai phong cách chiến binh
             const shoulderMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.1 });
             const leftPad = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.18, 0.44), shoulderMat);
             leftPad.position.set(-0.48, 0.42, 0);
@@ -613,14 +609,12 @@
             rightPad.position.set(0.48, 0.42, 0);
             group.add(rightPad);
 
-            // Đầu nhân vật
             const headGeo = new THREE.BoxGeometry(0.52, 0.52, 0.52);
             const headMat = new THREE.MeshStandardMaterial({ color: config.skinColor, roughness: 0.4 });
             const head = new THREE.Mesh(headGeo, headMat);
             head.position.y = 0.82;
             group.add(head);
 
-            // Mắt anime sắc sảo
             const eyeGeo = new THREE.BoxGeometry(0.09, 0.07, 0.05);
             const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
             const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
@@ -630,7 +624,6 @@
             rightEye.position.set(0.12, 0.86, 0.27);
             group.add(rightEye);
 
-            // Kiểu tóc hoặc mũ giáp
             const hairMat = new THREE.MeshStandardMaterial({ color: config.hairColor, roughness: 0.3 });
             if (config.hairStyle === 'spiky') {
                 const hair1 = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.45, 5), hairMat);
@@ -650,10 +643,8 @@
                 group.add(hair3);
             }
 
-            // Vũ khí chuyên biệt theo lớp nhân vật
             const weaponGroup = new THREE.Group();
             if (config.weapon === 'katana') {
-                // Katana Phượng Hoàng
                 const blade = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.4, 0.04), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.98, roughness: 0.02 }));
                 blade.position.y = 0.7;
                 weaponGroup.add(blade);
@@ -661,7 +652,6 @@
                 hilt.position.y = 0.05;
                 weaponGroup.add(hilt);
             } else if (config.weapon === 'broadsword') {
-                // Trọng Kiếm Khổng Lồ
                 const blade = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.3, 0.06), new THREE.MeshStandardMaterial({ color: 0x93c5fd, metalness: 0.9, roughness: 0.1 }));
                 blade.position.y = 0.65;
                 weaponGroup.add(blade);
@@ -669,14 +659,12 @@
                 hilt.position.y = 0.02;
                 weaponGroup.add(hilt);
             } else if (config.weapon === 'staff') {
-                // Trượng Pháp Sư Ma Pháp
                 const staff = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.9), new THREE.MeshStandardMaterial({ color: 0x451a03 }));
                 weaponGroup.add(staff);
                 const orb = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x1d4ed8, emissiveIntensity: 0.9 }));
                 orb.position.y = 1.0;
                 weaponGroup.add(orb);
             } else if (config.weapon === 'bow') {
-                // Cung Thần Ánh Sáng
                 const bowGeo = new THREE.TorusGeometry(0.7, 0.04, 8, 24, Math.PI);
                 const bow = new THREE.Mesh(bowGeo, new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.8 }));
                 bow.rotation.z = Math.PI / 2;
@@ -755,7 +743,6 @@
 
             if (loginAvatarGroup) loginAvatarGroup.rotation.y += 0.006;
             if (lobbyAvatarGroup) lobbyAvatarGroup.rotation.y = Math.sin(time * 0.8) * 0.4;
-            // Hiệu ứng idle (nhàn rỗi) thở nhẹ cho nhân vật trong game
             if (gameAvatarGroup) {
                 gameAvatarGroup.position.y = -0.3 + Math.sin(time * 5) * 0.04;
                 gameAvatarGroup.rotation.z = Math.sin(time * 2.5) * 0.03;
@@ -766,7 +753,6 @@
             if (gameRenderer && gameScene && gameCamera) gameRenderer.render(gameScene, gameCamera);
         }
 
-        // 15 câu hỏi Triết học Mác - Lênin
         const questions = [
             { 
                 q: "Hạn chế lớn nhất của quan niệm duy vật trước Mác về vật chất là gì?", 
@@ -1237,7 +1223,6 @@
             db.ref('room/gameState').update({ revealed: true });
         }
 
-        // Animation tấn công riêng biệt theo từng loại vũ khí/lớp nhân vật
         function playAttackAnimation(isCorrect) {
             const container = document.getElementById('skill-effects-container');
             const effectEl = document.createElement('div');
@@ -1260,7 +1245,6 @@
                     }, 800);
                 }
 
-                // Chọn hiệu ứng động tương ứng với vũ khí
                 if (avatarConfig.weapon === 'staff') {
                     effectEl.className = "absolute text-6xl anim-magic z-40 pointer-events-none";
                     effectEl.innerHTML = "🔮✨🌟";
