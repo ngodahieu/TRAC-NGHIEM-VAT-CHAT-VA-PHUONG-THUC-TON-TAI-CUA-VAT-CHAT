@@ -94,7 +94,7 @@
         <p class="text-gray-300 mb-4 text-sm">Tạo hình chiến binh 3D cao cấp với phong cách anime/RPG hoành tráng!</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-            <!-- Khu vực khung 3D xem trước nhân vật 360 độ (Đã đổi sang nền trắng xám) -->
+            <!-- Khu vực khung 3D xem trước nhân vật 360 độ -->
             <div class="relative w-full h-72 bg-gradient-to-b from-gray-200 to-gray-300 rounded-xl border-2 border-yellow-500/60 overflow-hidden shadow-inner flex items-center justify-center">
                 <div id="avatar-canvas-container" class="w-full h-full cursor-grab"></div>
                 <div class="absolute bottom-2 left-2 bg-gray-900/80 px-2 py-1 rounded text-[10px] text-yellow-400 font-bold border border-yellow-500/30">🖱️ Xoay để xem 360°</div>
@@ -173,7 +173,6 @@
     <!-- MÀN HÌNH CHỜ (LOBBY) -->
     <div id="lobby-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-xl text-center hidden">
         <div class="flex justify-center mb-4">
-            <!-- Nền trắng xám cho Avatar ở phòng chờ -->
             <div id="lobby-avatar-container" class="w-36 h-36 bg-gradient-to-b from-gray-200 to-gray-300 rounded-2xl border-2 border-yellow-500/60 overflow-hidden shadow-xl"></div>
         </div>
         <h2 class="game-font text-2xl font-bold text-yellow-400 mb-1">PHÒNG CHỜ CHIẾN BINH</h2>
@@ -195,13 +194,11 @@
         <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[300px] justify-center">
             <div class="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/20 to-transparent pointer-events-none"></div>
             
-            <!-- Khung nhân vật mini 3D trong game (Đã đổi sang nền trắng xám) -->
             <div id="mini-avatar-wrapper" class="absolute top-3 left-3 w-28 h-32 bg-gradient-to-b from-gray-200 to-gray-300 border-2 border-green-500/80 rounded-xl overflow-hidden shadow-2xl z-30 flex flex-col items-center transition-all duration-300">
                 <div id="game-avatar-container" class="w-full h-24"></div>
                 <div class="w-full bg-gray-900 text-[9px] text-green-300 text-center font-bold py-0.5 truncate px-1" id="mini-player-name">Chiến Binh</div>
             </div>
 
-            <!-- Khung hiển thị Boss rồng -->
             <div class="dragon-img-container w-full h-64 sm:h-72 rounded-2xl border-2 border-red-500/60 shadow-[0_0_35px_rgba(239,68,68,0.8)] relative overflow-hidden flex items-center justify-center bg-black">
                 <img src="Hinh_nen_rong_vang_3d_1_aba0e2f825.jpg" alt="Hỏa Long Vương" class="w-full h-full object-cover filter contrast-110" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop';">
                 
@@ -408,6 +405,43 @@
                 clearInterval(bgmInterval);
                 bgmInterval = null;
             }
+        }
+
+        // HÀM ÂM THANH "TẸT TENG TENG TÈNG TEN" (FANFARE VINH DANH)
+        function playVictoryFanfare() {
+            if (isAudioMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const notes = [
+                    { freq: 523.25, duration: 0.15, delay: 0 },     // Tẹt (C5)
+                    { freq: 659.25, duration: 0.15, delay: 0.18 },  // Teng (E5)
+                    { freq: 783.99, duration: 0.15, delay: 0.36 },  // Teng (G5)
+                    { freq: 1046.50, duration: 0.35, delay: 0.54 }, // Tèng (C6)
+                    { freq: 783.99, duration: 0.2, delay: 0.92 },   // Ten (G5)
+                    { freq: 1046.50, duration: 0.6, delay: 1.15 }   // Ten dài (C6)
+                ];
+
+                notes.forEach(note => {
+                    setTimeout(() => {
+                        if (isAudioMuted || !audioCtx) return;
+                        const now = ctx.currentTime;
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(note.freq, now);
+                        
+                        gain.gain.setValueAtTime(0.25, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + note.duration);
+                        
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        
+                        osc.start(now);
+                        osc.stop(now + note.duration);
+                    }, note.delay * 1000);
+                });
+            } catch(e) { console.log(e); }
         }
 
         function playClickSound() {
@@ -1112,7 +1146,10 @@
                 if (snapshot.exists()) {
                     selectedAnswerIndex = snapshot.val();
                     const btn = document.getElementById(`ans-btn-${selectedAnswerIndex}`);
-                    if (btn) btn.classList.add('border-blue-500', 'bg-blue-950/40');
+                    if (btn) {
+                        // Đổi màu vàng sáng khi đã chọn trước đó
+                        btn.className = "py-4 px-6 bg-yellow-950/60 border-2 border-yellow-400 rounded-xl font-bold transition text-left flex items-center justify-between text-yellow-200 shadow-[0_0_15px_rgba(250,204,21,0.4)] cursor-pointer";
+                    }
                 }
             });
         }
@@ -1183,7 +1220,8 @@
             selectedAnswerIndex = idx;
             const currentBtn = document.getElementById(`ans-btn-${idx}`);
             if (currentBtn) {
-                currentBtn.classList.add('border-blue-500', 'bg-blue-950/40');
+                // HIỆN THỊ MÀU VÀNG SÁNG KHI ĐÃ CHỌN ĐỂ CHỜ ĐỢI
+                currentBtn.className = "py-4 px-6 bg-yellow-950/60 border-2 border-yellow-400 rounded-xl font-bold transition text-left flex items-center justify-between text-yellow-200 shadow-[0_0_15px_rgba(250,204,21,0.4)] cursor-pointer";
             }
 
             db.ref('room/playerChoices/' + myPlayerId).set(idx);
@@ -1304,9 +1342,9 @@
                 for (let i = 0; i < buttons.length; i++) {
                     buttons[i].disabled = true;
                     if (i === correctIdx) {
-                        buttons[i].classList.add('bg-green-600/80', 'border-green-500');
+                        buttons[i].className = "py-4 px-6 bg-green-600/80 border-2 border-green-400 rounded-xl font-bold transition text-left flex items-center justify-between text-white shadow-lg";
                     } else if (i === selectedAnswerIndex && i !== correctIdx) {
-                        buttons[i].classList.add('bg-red-600/80', 'border-red-500');
+                        buttons[i].className = "py-4 px-6 bg-red-600/80 border-2 border-red-400 rounded-xl font-bold transition text-left flex items-center justify-between text-white shadow-lg";
                     }
                 }
 
@@ -1375,7 +1413,7 @@
                 const buttons = document.getElementById('answers-container').children;
                 for (let i = 0; i < buttons.length; i++) {
                     if (i === correctIdx) {
-                        buttons[i].classList.add('bg-green-600/80', 'border-green-500');
+                        buttons[i].className = "py-4 px-6 bg-green-600/80 border-2 border-green-400 rounded-xl font-bold transition text-left flex items-center justify-between text-white shadow-lg";
                     }
                 }
             }
@@ -1466,6 +1504,9 @@
         function endGame(isVictory) {
             if (timerInterval) clearInterval(timerInterval);
             stopBGM();
+            
+            // PHÁT ÂM THANH "TẸT TENG TENG TÈNG TEN" KHI VÀO BẢNG VINH DANH
+            playVictoryFanfare();
             
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
