@@ -23,6 +23,12 @@
         }
         .dragon-img-container { animation: dragonHover 3.5s ease-in-out infinite; }
 
+        @keyframes enrageDragon {
+            0%, 100% { transform: translateY(0px) scale(1.02); filter: brightness(1.2) hue-rotate(-15deg); }
+            50% { transform: translateY(-10px) scale(1.05); filter: brightness(1.4) hue-rotate(-25deg); }
+        }
+        .boss-enraged { animation: enrageDragon 1.8s ease-in-out infinite; border-color: #a855f7 !important; box-shadow: 0 0 45px rgba(168, 85, 247, 0.9) !important; }
+
         @keyframes fireBreathAnim {
             0% { transform: scale(0.4) translateY(0); opacity: 0; }
             40% { opacity: 0.95; }
@@ -84,10 +90,13 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <!-- NÚT BẬT/TẮT ÂM THANH / NHẠC NỀN -->
+    <!-- NÚT ĐIỀU KHIỂN ÂM THANH (TÁCH BIỆT NHẠC NỀN & HIỆU ỨNG) -->
     <div class="fixed top-4 right-4 z-50 flex items-center gap-2">
-        <button onclick="toggleAudioMute()" id="audio-toggle-btn" class="bg-gray-900/80 hover:bg-gray-800 border border-yellow-500/50 px-3 py-1.5 rounded-xl text-xs font-bold text-yellow-400 shadow-lg flex items-center gap-1 transition">
-            🔊 <span id="audio-status-text">Bật Nhạc</span>
+        <button onclick="toggleBGM()" id="bgm-toggle-btn" class="bg-gray-900/80 hover:bg-gray-800 border border-yellow-500/50 px-3 py-1.5 rounded-xl text-xs font-bold text-yellow-400 shadow-lg flex items-center gap-1 transition">
+            🎵 <span id="bgm-status-text">Nhạc Nền: Bật</span>
+        </button>
+        <button onclick="toggleSFX()" id="sfx-toggle-btn" class="bg-gray-900/80 hover:bg-gray-800 border border-yellow-500/50 px-3 py-1.5 rounded-xl text-xs font-bold text-yellow-400 shadow-lg flex items-center gap-1 transition">
+            🔊 <span id="sfx-status-text">Hiệu Ứng: Bật</span>
         </button>
     </div>
 
@@ -202,7 +211,8 @@
                 <div class="w-full bg-gray-900 text-[9px] text-green-300 text-center font-bold py-0.5 truncate px-1" id="mini-player-name">Chiến Binh</div>
             </div>
 
-            <div class="dragon-img-container w-full h-64 sm:h-72 rounded-2xl border-2 border-red-500/60 shadow-[0_0_35px_rgba(239,68,68,0.8)] relative overflow-hidden flex items-center justify-center bg-black">
+            <!-- Khung Boss với hiệu ứng Enrage Mode khi máu < 30% -->
+            <div id="dragon-container-box" class="dragon-img-container w-full h-64 sm:h-72 rounded-2xl border-2 border-red-500/60 shadow-[0_0_35px_rgba(239,68,68,0.8)] relative overflow-hidden flex items-center justify-center bg-black transition-all duration-500">
                 <img src="Hinh_nen_rong_vang_3d_1_aba0e2f825.jpg" alt="Hỏa Long Vương" class="w-full h-full object-cover filter contrast-110" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop';">
                 
                 <div class="absolute top-28 left-1/3 w-20 h-24 bg-gradient-to-t from-transparent via-orange-500 to-yellow-300 rounded-full blur-md anim-dragon-fire pointer-events-none z-20"></div>
@@ -214,8 +224,18 @@
                 </div>
             </div>
 
-            <h2 class="game-font text-xl font-bold text-red-500 boss-glow tracking-wider z-10 mt-2">HỎA LONG VƯƠNG</h2>
+            <h2 id="boss-title-text" class="game-font text-xl font-bold text-red-500 boss-glow tracking-wider z-10 mt-2">HỎA LONG VƯƠNG</h2>
             <p id="role-notice" class="text-xs text-yellow-400 font-bold mb-3 z-10">⚡ Chế độ: Người chơi tham gia chiến đấu</p>
+
+            <!-- KHO KỸ NĂNG HỖ TRỢ TRONG TRẬN (Power-ups) -->
+            <div id="powerups-bar" class="flex gap-2 mb-3 z-20">
+                <button onclick="useShieldSkill()" id="skill-shield-btn" class="bg-blue-900/80 hover:bg-blue-800 border border-blue-400 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-200 shadow-md transition flex items-center gap-1 cursor-pointer">
+                    🛡️ Khiên Chắn (<span id="count-shield">1</span>)
+                </button>
+                <button onclick="useFiftyFiftySkill()" id="skill-5050-btn" class="bg-purple-900/80 hover:bg-purple-800 border border-purple-400 px-3 py-1.5 rounded-xl text-xs font-bold text-purple-200 shadow-md transition flex items-center gap-1 cursor-pointer">
+                    ✨ 50/50 (<span id="count-5050">1</span>)
+                </button>
+            </div>
 
             <div id="skill-effects-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-30"></div>
 
@@ -283,7 +303,10 @@
         <div id="podium-container" class="grid grid-cols-3 gap-3 mb-6 items-end justify-center px-4"></div>
 
         <div class="bg-gray-900/80 p-4 rounded-xl mb-6 text-left max-h-56 overflow-y-auto border border-gray-800">
-            <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3">🏅 Danh Sách Các Chiến Binh Khác (Từ Hạng 4)</h4>
+            <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3 flex justify-between items-center">
+                <span>🏅 Danh Sách Các Chiến Binh Khác (Từ Hạng 4)</span>
+                <button id="download-csv-btn" onclick="exportScoreCSV()" class="bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold hidden transition shadow">📥 Tải Bảng Điểm (CSV)</button>
+            </h4>
             <div id="final-leaderboard" class="space-y-2 text-sm"></div>
         </div>
 
@@ -322,10 +345,17 @@
         };
 
         let audioCtx = null;
-        let isAudioMuted = false;
+        let isBGMMuted = false;
+        let isSFXMuted = false;
         let bgmInterval = null;
         let bgmStep = 0;
-        let currentStreak = 0; // Biến lưu chuỗi streak hiện tại
+        let currentStreak = 0; 
+
+        // Trạng thái kỹ năng hỗ trợ trong trận
+        let hasShieldActive = false;
+        let hasUsed5050 = false;
+        let shieldCount = 1;
+        let count5050 = 1;
 
         function getAudioContext() {
             if (!audioCtx) {
@@ -337,16 +367,16 @@
             return audioCtx;
         }
 
-        function toggleAudioMute() {
-            isAudioMuted = !isAudioMuted;
-            const btnText = document.getElementById('audio-status-text');
-            const toggleBtn = document.getElementById('audio-toggle-btn');
-            if (isAudioMuted) {
-                btnText.innerText = "Tắt Nhạc";
+        function toggleBGM() {
+            isBGMMuted = !isBGMMuted;
+            const btnText = document.getElementById('bgm-status-text');
+            const toggleBtn = document.getElementById('bgm-toggle-btn');
+            if (isBGMMuted) {
+                btnText.innerText = "Nhạc Nền: Tắt";
                 toggleBtn.classList.add('opacity-50');
                 stopBGM();
             } else {
-                btnText.innerText = "Bật Nhạc";
+                btnText.innerText = "Nhạc Nền: Bật";
                 toggleBtn.classList.remove('opacity-50');
                 getAudioContext();
                 startBGM();
@@ -354,15 +384,29 @@
             playClickSound();
         }
 
+        function toggleSFX() {
+            isSFXMuted = !isSFXMuted;
+            const btnText = document.getElementById('sfx-status-text');
+            const toggleBtn = document.getElementById('sfx-toggle-btn');
+            if (isSFXMuted) {
+                btnText.innerText = "Hiệu Ứng: Tắt";
+                toggleBtn.classList.add('opacity-50');
+            } else {
+                btnText.innerText = "Hiệu Ứng: Bật";
+                toggleBtn.classList.remove('opacity-50');
+            }
+            playClickSound();
+        }
+
         function startBGM() {
-            if (isAudioMuted || bgmInterval) return;
+            if (isBGMMuted || bgmInterval) return;
             const ctx = getAudioContext();
             
             const epicBass = [110, 123.47, 130.81, 146.83, 164.81, 130.81, 110, 98.00];
             const epicLead = [220, 329.63, 440, 523.25, 440, 392.00, 329.63, 293.66];
 
             bgmInterval = setInterval(() => {
-                if (isAudioMuted || !audioCtx) return;
+                if (isBGMMuted || !audioCtx) return;
                 try {
                     const now = ctx.currentTime;
                     
@@ -411,23 +455,22 @@
             }
         }
 
-        // HÀM ÂM THANH "TẸT TENG TENG TÈNG TEN" (FANFARE VINH DANH)
         function playVictoryFanfare() {
-            if (isAudioMuted) return;
+            if (isSFXMuted) return;
             try {
                 const ctx = getAudioContext();
                 const notes = [
-                    { freq: 523.25, duration: 0.15, delay: 0 },     // Tẹt (C5)
-                    { freq: 659.25, duration: 0.15, delay: 0.18 },  // Teng (E5)
-                    { freq: 783.99, duration: 0.15, delay: 0.36 },  // Teng (G5)
-                    { freq: 1046.50, duration: 0.35, delay: 0.54 }, // Tèng (C6)
-                    { freq: 783.99, duration: 0.2, delay: 0.92 },   // Ten (G5)
-                    { freq: 1046.50, duration: 0.6, delay: 1.15 }   // Ten dài (C6)
+                    { freq: 523.25, duration: 0.15, delay: 0 },
+                    { freq: 659.25, duration: 0.15, delay: 0.18 },
+                    { freq: 783.99, duration: 0.15, delay: 0.36 },
+                    { freq: 1046.50, duration: 0.35, delay: 0.54 },
+                    { freq: 783.99, duration: 0.2, delay: 0.92 },
+                    { freq: 1046.50, duration: 0.6, delay: 1.15 }
                 ];
 
                 notes.forEach(note => {
                     setTimeout(() => {
-                        if (isAudioMuted || !audioCtx) return;
+                        if (isSFXMuted || !audioCtx) return;
                         const now = ctx.currentTime;
                         const osc = ctx.createOscillator();
                         const gain = ctx.createGain();
@@ -449,7 +492,7 @@
         }
 
         function playClickSound() {
-            if (isAudioMuted) return;
+            if (isSFXMuted) return;
             try {
                 const ctx = getAudioContext();
                 const osc = ctx.createOscillator();
@@ -467,7 +510,7 @@
         }
 
         function playTingSound() {
-            if (isAudioMuted) return;
+            if (isSFXMuted) return;
             try {
                 const ctx = getAudioContext();
                 const osc = ctx.createOscillator();
@@ -485,7 +528,7 @@
         }
 
         function playSlashSound() {
-            if (isAudioMuted) return;
+            if (isSFXMuted) return;
             try {
                 const ctx = getAudioContext();
                 const osc = ctx.createOscillator();
@@ -503,7 +546,7 @@
         }
 
         function playDragonHitSound() {
-            if (isAudioMuted) return;
+            if (isSFXMuted) return;
             try {
                 const ctx = getAudioContext();
                 const bufferSize = ctx.sampleRate * 0.4;
@@ -529,7 +572,7 @@
         }
 
         function playBuzzerSound() {
-            if (isAudioMuted) return;
+            if (isSFXMuted) return;
             try {
                 const ctx = getAudioContext();
                 const osc = ctx.createOscillator();
@@ -548,7 +591,7 @@
         }
 
         function playDragonFireSound() {
-            if (isAudioMuted) return;
+            if (isSFXMuted) return;
             try {
                 const ctx = getAudioContext();
                 const bufferSize = ctx.sampleRate * 0.7;
@@ -571,6 +614,24 @@
                 filter.connect(gain);
                 gain.connect(ctx.destination);
                 noise.start();
+            } catch(e) { console.log(e); }
+        }
+
+        // ÂM THANH ĐẾM NGƯỢC 3 GIÂY CUỐI
+        function playTickSound() {
+            if (isSFXMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1046.50, ctx.currentTime); // C6
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
             } catch(e) { console.log(e); }
         }
 
@@ -1005,7 +1066,6 @@
                 sessionStorage.removeItem('boss_is_admin');
             }
 
-            // Hiệu ứng mờ dần khi chuyển màn hình
             const loginScreen = document.getElementById('login-screen');
             loginScreen.style.opacity = '0';
             setTimeout(() => {
@@ -1098,6 +1158,13 @@
             myDps = 0;
             myCorrectCount = 0;
             currentStreak = 0;
+            shieldCount = 1;
+            count5050 = 1;
+            hasUsed5050 = false;
+            hasShieldActive = false;
+            document.getElementById('count-shield').innerText = shieldCount;
+            document.getElementById('count-5050').innerText = count5050;
+
             localStorage.setItem('boss_player_dps', myDps);
             localStorage.setItem('boss_player_correct', myCorrectCount);
             const myDpsEl = document.getElementById('my-dps');
@@ -1142,6 +1209,7 @@
                 document.getElementById('role-notice').className = "text-xs text-yellow-400 font-bold mb-3 z-10";
                 document.getElementById('admin-controls').classList.remove('hidden');
                 document.getElementById('leaderboard-title').innerText = "🏆 Bảng Xếp Hạng Trực Tiếp (Dành Cho Admin)";
+                document.getElementById('powerups-bar').classList.add('hidden'); // Admin không cần kĩ năng người chơi
             } else {
                 document.getElementById('role-notice').innerText = "⚡ Chế độ: Người chơi tham gia chiến đấu";
                 document.getElementById('role-notice').className = "text-xs text-green-400 font-bold mb-3 z-10";
@@ -1173,6 +1241,51 @@
             });
         }
 
+        // KỸ NĂNG: DÙNG KHIÊN CHẮN (BẢO VỆ KHỎI TRỪ ĐIỂM VÀ PHẢN CÔNG)
+        function useShieldSkill() {
+            if (shieldCount <= 0 || isRevealed || selectedAnswerIndex !== null) return;
+            playClickSound();
+            shieldCount--;
+            hasShieldActive = true;
+            document.getElementById('count-shield').innerText = shieldCount;
+            document.getElementById('skill-shield-btn').classList.add('opacity-50', 'cursor-not-allowed');
+
+            const container = document.getElementById('skill-effects-container');
+            const shieldPopup = document.createElement('div');
+            shieldPopup.className = "absolute text-blue-300 bg-blue-950/90 border border-blue-400 px-3 py-1.5 rounded-xl font-bold text-sm z-45 animate-bounce";
+            shieldPopup.style.top = "20%";
+            shieldPopup.innerText = "🛡️ Đã kích hoạt Khiên Bảo Vệ cho câu này!";
+            container.appendChild(shieldPopup);
+            setTimeout(() => shieldPopup.remove(), 1500);
+        }
+
+        // KỸ NĂNG: LOẠI TRỪ 50/50 (BỎ BỚT 2 ĐÁP ÁN SAI)
+        function useFiftyFiftySkill() {
+            if (count5050 <= 0 || isRevealed || selectedAnswerIndex !== null) return;
+            playClickSound();
+            count5050--;
+            hasUsed5050 = true;
+            document.getElementById('count-5050').innerText = count5050;
+            document.getElementById('skill-5050-btn').classList.add('opacity-50', 'cursor-not-allowed');
+
+            const q = questions[currentQuestionIndex];
+            const correctIdx = q.correct;
+            let wrongIndices = [0, 1, 2, 3].filter(i => i !== correctIdx);
+            
+            // Random chọn 2 đáp án sai để ẩn đi
+            wrongIndices.sort(() => Math.random() - 0.5);
+            let toHide = wrongIndices.slice(0, 2);
+
+            toHide.forEach(idx => {
+                const btn = document.getElementById(`ans-btn-${idx}`);
+                if (btn) {
+                    btn.style.opacity = '0.2';
+                    btn.style.pointerEvents = 'none';
+                    btn.innerHTML = `<span class="text-gray-500 italic">Đã bị loại trừ (50/50)</span>`;
+                }
+            });
+        }
+
         function loadQuestion(startTime) {
             if (currentQuestionIndex >= questions.length) {
                 if (isAdmin) {
@@ -1185,6 +1298,7 @@
 
             selectedAnswerIndex = null;
             isRevealed = false;
+            hasShieldActive = false; // Reset shield mỗi câu mới
             
             document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
             
@@ -1218,6 +1332,11 @@
                     let timeLeft = Math.max(0, 15 - elapsedSeconds);
 
                     document.getElementById('timer').innerText = timeLeft + 's';
+
+                    // Phát tiếng tít tít 3 giây cuối
+                    if (timeLeft <= 3 && timeLeft > 0) {
+                        playTickSound();
+                    }
 
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
@@ -1323,6 +1442,17 @@
                 }, 350);
 
             } else {
+                if (hasShieldActive) {
+                    playTingSound();
+                    const shieldText = document.createElement('div');
+                    shieldText.className = "absolute text-blue-300 bg-blue-950/95 border-2 border-blue-400 px-4 py-2 rounded-xl font-bold text-lg game-font z-50 animate-bounce shadow-2xl";
+                    shieldText.style.top = "35%";
+                    shieldText.innerText = "🛡️ KHIÊN ĐÃ CHẶN ĐỨNG ĐÒN TẤN CÔNG CỦA RỒNG! KHÔNG BỊ TRỪ ĐIỂM!";
+                    container.appendChild(shieldText);
+                    setTimeout(() => shieldText.remove(), 1200);
+                    return;
+                }
+
                 playBuzzerSound();
                 setTimeout(() => playDragonFireSound(), 200);
 
@@ -1387,7 +1517,6 @@
                         let questionScoreEarned = 0;
 
                         if (selectedAnswerIndex === correctIdx && myCorrectRank > 0) {
-                            // Tăng chuỗi streak khi trả lời đúng
                             currentStreak++;
                             
                             if (myCorrectRank === 1) {
@@ -1398,7 +1527,6 @@
                                 questionScoreEarned = Math.round(1000 - (myCorrectRank - 1) * (900 / 99));
                             }
 
-                            // KĨ NĂNG ĐẶC BIỆT KHI ĐẠT STREAK 10: TĂNG x2.5 ĐIỂM THƯỞNG
                             if (currentStreak >= 10) {
                                 questionScoreEarned = Math.round(questionScoreEarned * 2.5);
                             }
@@ -1424,15 +1552,17 @@
                             });
 
                         } else {
-                            // Reset streak về 0 nếu trả lời sai hoặc không chọn
-                            currentStreak = 0;
+                            if (!hasShieldActive) {
+                                currentStreak = 0;
+                            }
                             playAttackAnimation(false);
                             
-                            myDps = Math.max(0, myDps - 200);
-                            localStorage.setItem('boss_player_dps', myDps);
-                            document.getElementById('my-dps').innerText = myDps;
-
-                            db.ref('room/players/' + myPlayerId).update({ dps: myDps });
+                            if (!hasShieldActive) {
+                                myDps = Math.max(0, myDps - 200);
+                                localStorage.setItem('boss_player_dps', myDps);
+                                document.getElementById('my-dps').innerText = myDps;
+                                db.ref('room/players/' + myPlayerId).update({ dps: myDps });
+                            }
                         }
                     });
                 });
@@ -1486,6 +1616,23 @@
                     document.getElementById('boss-hp-bar').style.width = percent + '%';
                     document.getElementById('boss-hp-text').innerText = `${Math.round(hp).toLocaleString()} / ${maxHp.toLocaleString()} HP`;
 
+                    // GIAI ĐOẠN ENRAGE MODE (MÁU DƯỚI 30%)
+                    const dragonBox = document.getElementById('dragon-container-box');
+                    const bossTitle = document.getElementById('boss-title-text');
+                    if (percent <= 30 && percent > 0) {
+                        if (dragonBox && !dragonBox.classList.contains('boss-enraged')) {
+                            dragonBox.classList.add('boss-enraged');
+                            bossTitle.innerText = "🔥 HỎA LONG VƯƠNG (GIẬN DỮ - ENRAGE) 🔥";
+                            bossTitle.className = "game-font text-xl font-bold text-purple-400 boss-glow tracking-wider z-10 mt-2 animate-pulse";
+                        }
+                    } else {
+                        if (dragonBox) {
+                            dragonBox.classList.remove('boss-enraged');
+                            bossTitle.innerText = "HỎA LONG VƯƠNG";
+                            bossTitle.className = "game-font text-xl font-bold text-red-500 boss-glow tracking-wider z-10 mt-2";
+                        }
+                    }
+
                     if (hp <= 0 && isAdmin) {
                         db.ref('room/gameState').update({ status: 'ended' });
                     }
@@ -1502,7 +1649,6 @@
                 lbContainer.innerHTML = '';
 
                 if (isAdmin) {
-                    // Admin thấy đầy đủ thứ hạng thật của tất cả người chơi
                     sorted.forEach((p, index) => {
                         const row = document.createElement('div');
                         row.className = "flex justify-between items-center bg-gray-900/40 px-3 py-1.5 rounded-lg";
@@ -1510,11 +1656,9 @@
                         lbContainer.appendChild(row);
                     });
                 } else {
-                    // Người chơi bình thường CHỈ THẤY KHOẢNG RANK (Ví dụ: Top 10, Top 20...) mà không thấy số chính xác
                     let myExactRank = sorted.findIndex(p => p.name === myName) + 1;
                     if (myExactRank === 0) myExactRank = sorted.length + 1;
 
-                    // Tính mốc hiển thị rank theo block (ví dụ: top 10, top 20, top 30...)
                     let displayRankTier = Math.ceil(myExactRank / 10) * 10;
                     if (displayRankTier < 10) displayRankTier = 10;
 
@@ -1550,6 +1694,10 @@
 
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('login-screen').classList.add('hidden');
+
+            if (isAdmin) {
+                document.getElementById('download-csv-btn').classList.remove('hidden');
+            }
 
             if (isVictory) {
                 document.getElementById('end-title').innerHTML = "CHIẾN THẮNG TRÙM!";
@@ -1615,6 +1763,30 @@
                 } else {
                     finalLb.innerHTML = `<div class="text-center text-xs text-gray-400 py-2">Chưa có thêm chiến binh từ hạng 4 trở xuống.</div>`;
                 }
+            });
+        }
+
+        // TÍNH NĂNG XUẤT FILE CSV DÀNH CHO GIÁO VIÊN / ADMIN
+        function exportScoreCSV() {
+            playClickSound();
+            db.ref('room/players').once('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const sorted = Object.values(players).sort((a, b) => b.dps - a.dps);
+
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+                csvContent += "Hang,Ten_Chien_Binh,Diem_Tich_Luy,So_Cau_Dung\r\n";
+
+                sorted.forEach((p, idx) => {
+                    csvContent += `${idx + 1},"${p.name}",${p.dps},${p.correct || 0}\r\n`;
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "Bang_Diem_DauTrumTrietHoc.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             });
         }
 
