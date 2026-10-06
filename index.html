@@ -491,6 +491,49 @@
             } catch(e) { console.log(e); }
         }
 
+        // ÂM THANH THẤT BẠI KIỂU "té-o tèo tẻo tèo"
+        function playDefeatFanfare() {
+            if (isSFXMuted) return;
+            try {
+                const ctx = getAudioContext();
+                // Mô phỏng âm điệu trầm buồn đi xuống: Té (note cao) - O (hạ xuống) - Tèo - Tẻo - Tèo (kéo dài trầm ấm)
+                const defeatNotes = [
+                    { freq: 392.00, duration: 0.2, delay: 0 },      // Té (G4)
+                    { freq: 329.63, duration: 0.2, delay: 0.22 },   // O (E4)
+                    { freq: 293.66, duration: 0.25, delay: 0.44 },  // Tèo (D4)
+                    { freq: 246.94, duration: 0.25, delay: 0.70 },  // Tẻo (B3)
+                    { freq: 196.00, duration: 0.6, delay: 0.98 }    // Tèo... (G3 trầm)
+                ];
+
+                defeatNotes.forEach(note => {
+                    setTimeout(() => {
+                        if (isSFXMuted || !audioCtx) return;
+                        const now = ctx.currentTime;
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        
+                        osc.type = 'sawtooth'; // Dùng dạng sóng sawtooth tạo âm thanh trầm đục, buồn bã
+                        osc.frequency.setValueAtTime(note.freq, now);
+                        
+                        gain.gain.setValueAtTime(0.3, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + note.duration);
+                        
+                        // Thêm một bộ lọc thấp để tiếng trầm ấm hơn
+                        const filter = ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(800, now);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(ctx.destination);
+                        
+                        osc.start(now);
+                        osc.stop(now + note.duration);
+                    }, note.delay * 1000);
+                });
+            } catch(e) { console.log(e); }
+        }
+
         function playClickSound() {
             if (isSFXMuted) return;
             try {
@@ -1680,7 +1723,12 @@
             if (timerInterval) clearInterval(timerInterval);
             stopBGM();
             
-            playVictoryFanfare();
+            // PHÂN BIỆT ÂM THANH CHIẾN THẮNG VÀ THẤT BẠI
+            if (isVictory) {
+                playVictoryFanfare();
+            } else {
+                playDefeatFanfare(); // Phát tiếng "té-o tèo tẻo tèo" khi thua
+            }
             
             const gameScreen = document.getElementById('game-screen');
             gameScreen.style.opacity = '0';
