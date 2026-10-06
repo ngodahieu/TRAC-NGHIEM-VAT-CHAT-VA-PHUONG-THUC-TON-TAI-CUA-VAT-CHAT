@@ -14,6 +14,9 @@
         .boss-glow { text-shadow: 0 0 30px rgba(239, 68, 68, 0.9), 0 0 60px rgba(220, 38, 38, 0.6); }
         .card-bg { background: rgba(17, 24, 39, 0.92); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
         
+        /* Hiệu ứng chuyển cảnh mượt mà */
+        .screen-transition { transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; }
+        
         @keyframes dragonHover {
             0%, 100% { transform: translateY(0px) scale(1); filter: brightness(1); }
             50% { transform: translateY(-8px) scale(1.02); filter: brightness(1.12); }
@@ -89,7 +92,7 @@
     </div>
 
     <!-- MÀN HÌNH ĐĂNG NHẬP & TÙY CHỈNH NHÂN VẬT 3D -->
-    <div id="login-screen" class="card-bg p-6 rounded-2xl shadow-2xl w-full max-w-2xl text-center">
+    <div id="login-screen" class="card-bg p-6 rounded-2xl shadow-2xl w-full max-w-2xl text-center screen-transition">
         <h1 class="game-font text-3xl font-bold text-red-500 mb-1 boss-glow">ĐẤU TRÙM HÚT MÁU</h1>
         <p class="text-gray-300 mb-4 text-sm">Tạo hình chiến binh 3D cao cấp với phong cách anime/RPG hoành tráng!</p>
         
@@ -171,7 +174,7 @@
     </div>
 
     <!-- MÀN HÌNH CHỜ (LOBBY) -->
-    <div id="lobby-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-xl text-center hidden">
+    <div id="lobby-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-xl text-center hidden screen-transition">
         <div class="flex justify-center mb-4">
             <div id="lobby-avatar-container" class="w-36 h-36 bg-gradient-to-b from-gray-200 to-gray-300 rounded-2xl border-2 border-yellow-500/60 overflow-hidden shadow-xl"></div>
         </div>
@@ -189,7 +192,7 @@
     </div>
 
     <!-- MÀN HÌNH GAME CHÍNH -->
-    <div id="game-screen" class="w-full max-w-3xl hidden">
+    <div id="game-screen" class="w-full max-w-3xl hidden screen-transition">
         
         <div id="battlefield" class="card-bg p-4 rounded-2xl mb-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[300px] justify-center">
             <div class="absolute inset-0 bg-gradient-to-b from-red-950/60 via-red-900/20 to-transparent pointer-events-none"></div>
@@ -273,7 +276,7 @@
     </div>
 
     <!-- MÀN HÌNH KẾT THÚC (VINH DANH) -->
-    <div id="end-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-3xl text-center hidden">
+    <div id="end-screen" class="card-bg p-8 rounded-2xl shadow-2xl w-full max-w-3xl text-center hidden screen-transition">
         <h2 id="end-title" class="game-font text-3xl font-bold mb-2">CHIẾN THẮNG!</h2>
         <p id="end-subtitle" class="text-gray-300 mb-6 text-base">Trận đại chiến đã khép lại. Dưới đây là bảng vinh danh các chiến binh:</p>
         
@@ -322,6 +325,7 @@
         let isAudioMuted = false;
         let bgmInterval = null;
         let bgmStep = 0;
+        let currentStreak = 0; // Biến lưu chuỗi streak hiện tại
 
         function getAudioContext() {
             if (!audioCtx) {
@@ -1001,9 +1005,17 @@
                 sessionStorage.removeItem('boss_is_admin');
             }
 
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('lobby-screen').classList.remove('hidden');
-            initLobbyAvatar();
+            // Hiệu ứng mờ dần khi chuyển màn hình
+            const loginScreen = document.getElementById('login-screen');
+            loginScreen.style.opacity = '0';
+            setTimeout(() => {
+                loginScreen.classList.add('hidden');
+                const lobby = document.getElementById('lobby-screen');
+                lobby.classList.remove('hidden');
+                lobby.style.opacity = '0';
+                setTimeout(() => lobby.style.opacity = '1', 50);
+                initLobbyAvatar();
+            }, 300);
 
             if (!isAdmin) {
                 const playerRef = db.ref('room/players/' + myPlayerId);
@@ -1085,6 +1097,7 @@
 
             myDps = 0;
             myCorrectCount = 0;
+            currentStreak = 0;
             localStorage.setItem('boss_player_dps', myDps);
             localStorage.setItem('boss_player_correct', myCorrectCount);
             const myDpsEl = document.getElementById('my-dps');
@@ -1109,9 +1122,16 @@
         }
 
         function startPlayingGame() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('lobby-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
+            const lobby = document.getElementById('lobby-screen');
+            const login = document.getElementById('login-screen');
+            const game = document.getElementById('game-screen');
+            
+            lobby.classList.add('hidden');
+            login.classList.add('hidden');
+            game.classList.remove('hidden');
+            game.style.opacity = '0';
+            setTimeout(() => game.style.opacity = '1', 50);
+
             document.getElementById('end-screen').classList.add('hidden');
 
             document.getElementById('mini-player-name').innerText = myName;
@@ -1147,7 +1167,6 @@
                     selectedAnswerIndex = snapshot.val();
                     const btn = document.getElementById(`ans-btn-${selectedAnswerIndex}`);
                     if (btn) {
-                        // Đổi màu vàng sáng khi đã chọn trước đó
                         btn.className = "py-4 px-6 bg-yellow-950/60 border-2 border-yellow-400 rounded-xl font-bold transition text-left flex items-center justify-between text-yellow-200 shadow-[0_0_15px_rgba(250,204,21,0.4)] cursor-pointer";
                     }
                 }
@@ -1220,7 +1239,6 @@
             selectedAnswerIndex = idx;
             const currentBtn = document.getElementById(`ans-btn-${idx}`);
             if (currentBtn) {
-                // HIỆN THỊ MÀU VÀNG SÁNG KHI ĐÃ CHỌN ĐỂ CHỜ ĐỢI
                 currentBtn.className = "py-4 px-6 bg-yellow-950/60 border-2 border-yellow-400 rounded-xl font-bold transition text-left flex items-center justify-between text-yellow-200 shadow-[0_0_15px_rgba(250,204,21,0.4)] cursor-pointer";
             }
 
@@ -1299,7 +1317,7 @@
                     const dmgText = document.createElement('div');
                     dmgText.className = "absolute text-green-400 font-bold text-2xl game-font z-45 animate-bounce";
                     dmgText.style.top = "35%";
-                    dmgText.innerText = "CHÍNH XÁC! TẤN CÔNG THÀNH CÔNG!";
+                    dmgText.innerText = currentStreak >= 10 ? "🔥 BỨT PHÁ GIỚI HẠN! x2.5 ĐIỂM!" : "CHÍNH XÁC! TẤN CÔNG THÀNH CÔNG!";
                     container.appendChild(dmgText);
                     setTimeout(() => dmgText.remove(), 900);
                 }, 350);
@@ -1369,8 +1387,9 @@
                         let questionScoreEarned = 0;
 
                         if (selectedAnswerIndex === correctIdx && myCorrectRank > 0) {
-                            playAttackAnimation(true);
-
+                            // Tăng chuỗi streak khi trả lời đúng
+                            currentStreak++;
+                            
                             if (myCorrectRank === 1) {
                                 questionScoreEarned = 1000;
                             } else if (myCorrectRank >= 100) {
@@ -1378,6 +1397,13 @@
                             } else {
                                 questionScoreEarned = Math.round(1000 - (myCorrectRank - 1) * (900 / 99));
                             }
+
+                            // KĨ NĂNG ĐẶC BIỆT KHI ĐẠT STREAK 10: TĂNG x2.5 ĐIỂM THƯỞNG
+                            if (currentStreak >= 10) {
+                                questionScoreEarned = Math.round(questionScoreEarned * 2.5);
+                            }
+
+                            playAttackAnimation(true);
 
                             myDps += questionScoreEarned;
                             myCorrectCount += 1;
@@ -1398,6 +1424,8 @@
                             });
 
                         } else {
+                            // Reset streak về 0 nếu trả lời sai hoặc không chọn
+                            currentStreak = 0;
                             playAttackAnimation(false);
                             
                             myDps = Math.max(0, myDps - 200);
@@ -1474,6 +1502,7 @@
                 lbContainer.innerHTML = '';
 
                 if (isAdmin) {
+                    // Admin thấy đầy đủ thứ hạng thật của tất cả người chơi
                     sorted.forEach((p, index) => {
                         const row = document.createElement('div');
                         row.className = "flex justify-between items-center bg-gray-900/40 px-3 py-1.5 rounded-lg";
@@ -1481,20 +1510,22 @@
                         lbContainer.appendChild(row);
                     });
                 } else {
-                    let myRank = sorted.findIndex(p => p.name === myName) + 1;
-                    if (myRank === 0) myRank = sorted.length + 1;
+                    // Người chơi bình thường CHỈ THẤY KHOẢNG RANK (Ví dụ: Top 10, Top 20...) mà không thấy số chính xác
+                    let myExactRank = sorted.findIndex(p => p.name === myName) + 1;
+                    if (myExactRank === 0) myExactRank = sorted.length + 1;
 
-                    let topTier = Math.ceil(myRank / 10) * 10;
-                    if (topTier < 10) topTier = 10;
+                    // Tính mốc hiển thị rank theo block (ví dụ: top 10, top 20, top 30...)
+                    let displayRankTier = Math.ceil(myExactRank / 10) * 10;
+                    if (displayRankTier < 10) displayRankTier = 10;
 
-                    let tierPlayers = sorted.slice(0, topTier);
-                    let maxScoreInTier = tierPlayers.length > 0 ? tierPlayers[0].dps : myDps;
+                    let topTierPlayers = sorted.slice(0, displayRankTier);
+                    let maxScoreInTier = topTierPlayers.length > 0 ? topTierPlayers[0].dps : myDps;
 
                     const row = document.createElement('div');
                     row.className = "bg-gray-900/60 p-3 rounded-xl border border-gray-800 text-center space-y-1";
                     row.innerHTML = `
-                        <div class="text-xs text-gray-300">Thứ hạng của bạn: <span class="game-font text-yellow-400 font-bold text-base">#${myRank}</span></div>
-                        <div class="text-xs">Điểm tích lũy: <span class="text-green-400 font-bold">${myDps} điểm</span> | Cao nhất: <span class="text-red-400 font-bold">${maxScoreInTier} điểm</span></div>
+                        <div class="text-xs text-gray-300">Vị trí của bạn: <span class="game-font text-yellow-400 font-bold text-base">Thuộc Top ${displayRankTier}</span></div>
+                        <div class="text-xs">Điểm tích lũy: <span class="text-green-400 font-bold">${myDps} điểm</span> | Chuỗi liên tiếp (Streak): <span class="text-orange-400 font-bold">${currentStreak} 🔥</span> ${currentStreak >= 10 ? '<span class="text-yellow-300 font-bold animate-pulse">(⚡ Bứt Phá x2.5 Active!)</span>' : ''}</div>
                     `;
                     lbContainer.appendChild(row);
                 }
@@ -1505,13 +1536,20 @@
             if (timerInterval) clearInterval(timerInterval);
             stopBGM();
             
-            // PHÁT ÂM THANH "TẸT TENG TENG TÈNG TEN" KHI VÀO BẢNG VINH DANH
             playVictoryFanfare();
             
-            document.getElementById('game-screen').classList.add('hidden');
+            const gameScreen = document.getElementById('game-screen');
+            gameScreen.style.opacity = '0';
+            setTimeout(() => {
+                gameScreen.classList.add('hidden');
+                const endScreen = document.getElementById('end-screen');
+                endScreen.classList.remove('hidden');
+                endScreen.style.opacity = '0';
+                setTimeout(() => endScreen.style.opacity = '1', 50);
+            }, 300);
+
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('end-screen').classList.remove('hidden');
 
             if (isVictory) {
                 document.getElementById('end-title').innerHTML = "CHIẾN THẮNG TRÙM!";
