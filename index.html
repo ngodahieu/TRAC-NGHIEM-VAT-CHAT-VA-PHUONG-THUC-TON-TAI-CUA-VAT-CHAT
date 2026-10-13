@@ -86,6 +86,24 @@
             100% { transform: translate(0, 0); }
         }
         .shake { animation: screenShake 0.5s ease-in-out; }
+
+        /* Hiệu ứng phát sáng chuyên biệt cho hàng của người chơi */
+        @keyframes playerGlowPulse {
+            0%, 100% {
+                border-color: rgba(234, 179, 8, 0.9);
+                box-shadow: 0 0 15px rgba(234, 179, 8, 0.6), inset 0 0 10px rgba(234, 179, 8, 0.3);
+                background-color: rgba(55, 48, 163, 0.4);
+            }
+            50% {
+                border-color: rgba(250, 204, 21, 1);
+                box-shadow: 0 0 30px rgba(250, 204, 21, 0.9), inset 0 0 20px rgba(250, 204, 21, 0.6);
+                background-color: rgba(67, 56, 202, 0.7);
+            }
+        }
+        .my-highlight-row {
+            animation: playerGlowPulse 1.8s ease-in-out infinite;
+            border-width: 2px !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
@@ -302,8 +320,8 @@
         
         <div id="podium-container" class="grid grid-cols-3 gap-3 mb-6 items-end justify-center px-4"></div>
 
-        <div class="bg-gray-900/80 p-4 rounded-xl mb-6 text-left max-h-56 overflow-y-auto border border-gray-800">
-            <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3 flex justify-between items-center">
+        <div id="final-leaderboard-wrapper" class="bg-gray-900/80 p-4 rounded-xl mb-6 text-left max-h-56 overflow-y-auto border border-gray-800 relative">
+            <h4 class="game-font text-xs text-yellow-400 font-bold uppercase mb-3 flex justify-between items-center sticky top-0 bg-gray-900/95 py-1 z-10">
                 <span>🏅 Danh Sách Các Chiến Binh Khác (Từ Hạng 4)</span>
                 <button id="download-csv-btn" onclick="exportScoreCSV()" class="bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold hidden transition shadow">📥 Tải Bảng Điểm (CSV)</button>
             </h4>
@@ -351,7 +369,6 @@
         let bgmStep = 0;
         let currentStreak = 0; 
 
-        // Trạng thái kỹ năng hỗ trợ trong trận
         let hasShieldActive = false;
         let hasUsed5050 = false;
         let shieldCount = 1;
@@ -491,18 +508,16 @@
             } catch(e) { console.log(e); }
         }
 
-        // ÂM THANH THẤT BẠI KIỂU "té-o tèo tẻo tèo"
         function playDefeatFanfare() {
             if (isSFXMuted) return;
             try {
                 const ctx = getAudioContext();
-                // Mô phỏng âm điệu trầm buồn đi xuống: Té (note cao) - O (hạ xuống) - Tèo - Tẻo - Tèo (kéo dài trầm ấm)
                 const defeatNotes = [
-                    { freq: 392.00, duration: 0.2, delay: 0 },      // Té (G4)
-                    { freq: 329.63, duration: 0.2, delay: 0.22 },   // O (E4)
-                    { freq: 293.66, duration: 0.25, delay: 0.44 },  // Tèo (D4)
-                    { freq: 246.94, duration: 0.25, delay: 0.70 },  // Tẻo (B3)
-                    { freq: 196.00, duration: 0.6, delay: 0.98 }    // Tèo... (G3 trầm)
+                    { freq: 392.00, duration: 0.2, delay: 0 },
+                    { freq: 329.63, duration: 0.2, delay: 0.22 },
+                    { freq: 293.66, duration: 0.25, delay: 0.44 },
+                    { freq: 246.94, duration: 0.25, delay: 0.70 },
+                    { freq: 196.00, duration: 0.6, delay: 0.98 }
                 ];
 
                 defeatNotes.forEach(note => {
@@ -512,13 +527,12 @@
                         const osc = ctx.createOscillator();
                         const gain = ctx.createGain();
                         
-                        osc.type = 'sawtooth'; // Dùng dạng sóng sawtooth tạo âm thanh trầm đục, buồn bã
+                        osc.type = 'sawtooth';
                         osc.frequency.setValueAtTime(note.freq, now);
                         
                         gain.gain.setValueAtTime(0.3, now);
                         gain.gain.exponentialRampToValueAtTime(0.001, now + note.duration);
                         
-                        // Thêm một bộ lọc thấp để tiếng trầm ấm hơn
                         const filter = ctx.createBiquadFilter();
                         filter.type = 'lowpass';
                         filter.frequency.setValueAtTime(800, now);
@@ -660,7 +674,6 @@
             } catch(e) { console.log(e); }
         }
 
-        // ÂM THANH ĐẾM NGƯỢC 3 GIÂY CUỐI
         function playTickSound() {
             if (isSFXMuted) return;
             try {
@@ -668,7 +681,7 @@
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(1046.50, ctx.currentTime); // C6
+                osc.frequency.setValueAtTime(1046.50, ctx.currentTime);
                 gain.gain.setValueAtTime(0.2, ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
                 osc.connect(gain);
@@ -895,6 +908,7 @@
             if (gameRenderer && gameScene && gameCamera) gameRenderer.render(gameScene, gameCamera);
         }
 
+        // BỘ 15 CÂU HỎI MỚI CHÍNH XÁC THEO TÀI LIỆU
         const questions = [
             { 
                 q: "Hạn chế lớn nhất của quan niệm duy vật trước Mác về vật chất là gì?", 
@@ -904,7 +918,7 @@
                     "Đồng nhất vật chất với vật thể cụ thể, chưa hiểu vật chất như một phạm trù triết học.", 
                     "Cho rằng vật chất là sản phẩm của ý thức tuyệt đối và không thể nhận thức được."
                 ], 
-                correct: 2 
+                correct: 2 // C
             },
             { 
                 q: "Vào cuối thế kỷ XIX – đầu thế kỷ XX, những phát minh nào trong khoa học tự nhiên đã làm lung lay quan niệm siêu hình về vật chất?", 
@@ -914,7 +928,7 @@
                     "Thuyết tương đối và cơ học lượng tử.", 
                     "Định luật bảo toàn và chuyển hóa năng lượng."
                 ], 
-                correct: 1 
+                correct: 1 // B
             },
             { 
                 q: "Trước khi chủ nghĩa duy vật biện chứng ra đời, nhìn chung các nhà triết học duy vật quan niệm vật chất là gì?", 
@@ -924,7 +938,7 @@
                     "Tổng hợp của không gian, thời gian và các quan hệ xã hội.", 
                     "Một hay một số chất tự có, đầu tiên, bị coi là giới hạn tột cùng."
                 ], 
-                correct: 3 
+                correct: 3 // D
             },
             { 
                 q: "Theo Lênin, khi nói “vật chất đang tiêu tan”, ý nghĩa thực sự là gì?", 
@@ -934,27 +948,27 @@
                     "Vật chất chỉ là ảo ảnh do giác quan đánh lừa, không có thực tại khách quan.", 
                     "Không còn vật chất trên thực tế, chỉ còn các công thức toán học thuần túy."
                 ], 
-                correct: 0 
+                correct: 0 // A
             },
             { 
-                q: "Cuộc khủng hoảng vật lý học cuối thế kỷ XIX – đầu thế kỷ XX đã đặt ra yêu cầu gì đối với triết học?", 
+                q: "Chủ nghĩa duy tâm đã lợi dụng cuộc khủng hoảng vật lý học để đưa ra luận điểm gì?", 
                 answers: [
-                    "Phủ nhận sự tồn tại của vật chất để bảo vệ khoa học tự nhiên.", 
-                    "Quay về quan niệm duy vật cổ đại về nước, lửa, không khí, đất.", 
-                    "Cần một định nghĩa mới khoa học, toàn diện về phạm trù vật chất.", 
-                    "Thừa nhận vật chất là sản phẩm của ý thức con người."
+                    "Vật chất tồn tại khách quan", 
+                    "“Vật chất đã tiêu tan mất”", 
+                    "Vật chất là hiện thực khách quan", 
+                    "Vật chất là phạm trù triết học"
                 ], 
-                correct: 2 
+                correct: 1 // B
             },
             { 
-                q: "V.I. Lênin đã rút ra kết luận gì từ cuộc khủng hoảng vật lý học?", 
+                q: "Những người theo chủ nghĩa duy vật siêu hình đã đồng nhất vật chất với gì?", 
                 answers: [
-                    "Vật chất chỉ là nguyên tử và không thể phân chia nhỏ hơn.", 
-                    "Vật chất không tồn tại, chỉ có cảm giác của con người tồn tại.", 
-                    "Khoa học tự nhiên không có vai trò gì đối với triết học.", 
-                    "Phân biệt phạm trù vật chất với cấu trúc cụ thể do khoa học tự nhiên nêu."
+                    "Thực tại khách quan", 
+                    "Nguyên tử hoặc khối lượng – một thuộc tính phổ biến của các vật thể", 
+                    "Không gian và thời gian", 
+                    "Ý thức con người"
                 ], 
-                correct: 3 
+                correct: 1 // B
             },
             { 
                 q: "Theo định nghĩa của V.I. Lênin, vật chất là gì?", 
@@ -964,7 +978,7 @@
                     "Sản phẩm của ý thức con người được thống nhất lại trong khái niệm.", 
                     "Tổng thể các chất tự có đầu tiên cấu thành nên mọi sự vật hiện tượng."
                 ], 
-                correct: 1 
+                correct: 1 // B
             },
             { 
                 q: "Định nghĩa vật chất của Lênin đã giải quyết vấn đề cơ bản của triết học như thế nào?", 
@@ -974,7 +988,7 @@
                     "Phủ nhận sự tồn tại của vật chất và khả năng nhận thức thế giới.", 
                     "Vật chất và ý thức song song tồn tại, không cái nào quyết định."
                 ], 
-                correct: 0 
+                correct: 0 // A
             },
             { 
                 q: "Ý nghĩa khoa học quan trọng nhất của định nghĩa vật chất của Lênin là gì?", 
@@ -984,7 +998,7 @@
                     "Thay thế toàn bộ các định nghĩa của khoa học tự nhiên về vật chất.", 
                     "Khắc phục hạn chế siêu hình, duy tâm; làm cơ sở cho nhận thức khoa học."
                 ], 
-                correct: 3 
+                correct: 3 // D
             },
             { 
                 q: "Theo quan điểm của chủ nghĩa duy vật biện chứng, vận động được hiểu như thế nào?", 
@@ -994,7 +1008,7 @@
                     "Mọi sự biến đổi nói chung của sự vật, hiện tượng.", 
                     "Sự biến đổi do ý thức con người tạo ra."
                 ], 
-                correct: 2 
+                correct: 2 // C
             },
             { 
                 q: "Vận động có vai trò như thế nào đối với vật chất?", 
@@ -1004,7 +1018,7 @@
                     "Sản phẩm của ý thức được gán vào tự nhiên.", 
                     "Không liên quan đến vật chất, chỉ là khái niệm toán học."
                 ], 
-                correct: 0 
+                correct: 0 // A
             },
             { 
                 q: "Theo quan điểm duy vật biện chứng, có thể có một dạng vật chất nào tồn tại bên ngoài không gian và thời gian không?", 
@@ -1014,7 +1028,7 @@
                     "Có, đó là tinh thần tuyệt đối.", 
                     "Có, đó là Thượng đế."
                 ], 
-                correct: 1 
+                correct: 1 // B
             },
             { 
                 q: "Theo quan điểm của chủ nghĩa duy vật biện chứng, thế giới thống nhất ở điểm nào?", 
@@ -1024,7 +1038,7 @@
                     "Thượng đế.", 
                     "Tính vật chất."
                 ], 
-                correct: 3 
+                correct: 3 // D
             },
             { 
                 q: "Cơ sở khoa học nào đã chứng minh tính thống nhất vật chất của thế giới?", 
@@ -1034,7 +1048,7 @@
                     "Tế bào, tiến hóa, bảo toàn năng lượng và vật lý hiện đại.", 
                     "Không có cơ sở khoa học nào."
                 ], 
-                correct: 2 
+                correct: 2 // C
             },
             { 
                 q: "Theo quan điểm duy vật biện chứng, ý thức có phải là một thế giới tồn tại độc lập với thế giới vật chất không?", 
@@ -1044,7 +1058,7 @@
                     "Có, ý thức sinh ra vật chất và chi phối toàn bộ tự nhiên.", 
                     "Không, vì ý thức hoàn toàn không tồn tại."
                 ], 
-                correct: 1 
+                correct: 1 // B
             }
         ];
 
@@ -1252,7 +1266,7 @@
                 document.getElementById('role-notice').className = "text-xs text-yellow-400 font-bold mb-3 z-10";
                 document.getElementById('admin-controls').classList.remove('hidden');
                 document.getElementById('leaderboard-title').innerText = "🏆 Bảng Xếp Hạng Trực Tiếp (Dành Cho Admin)";
-                document.getElementById('powerups-bar').classList.add('hidden'); // Admin không cần kĩ năng người chơi
+                document.getElementById('powerups-bar').classList.add('hidden');
             } else {
                 document.getElementById('role-notice').innerText = "⚡ Chế độ: Người chơi tham gia chiến đấu";
                 document.getElementById('role-notice').className = "text-xs text-green-400 font-bold mb-3 z-10";
@@ -1284,7 +1298,6 @@
             });
         }
 
-        // KỸ NĂNG: DÙNG KHIÊN CHẮN (BẢO VỆ KHỎI TRỪ ĐIỂM VÀ PHẢN CÔNG)
         function useShieldSkill() {
             if (shieldCount <= 0 || isRevealed || selectedAnswerIndex !== null) return;
             playClickSound();
@@ -1302,7 +1315,6 @@
             setTimeout(() => shieldPopup.remove(), 1500);
         }
 
-        // KỸ NĂNG: LOẠI TRỪ 50/50 (BỎ BỚT 2 ĐÁP ÁN SAI)
         function useFiftyFiftySkill() {
             if (count5050 <= 0 || isRevealed || selectedAnswerIndex !== null) return;
             playClickSound();
@@ -1315,7 +1327,6 @@
             const correctIdx = q.correct;
             let wrongIndices = [0, 1, 2, 3].filter(i => i !== correctIdx);
             
-            // Random chọn 2 đáp án sai để ẩn đi
             wrongIndices.sort(() => Math.random() - 0.5);
             let toHide = wrongIndices.slice(0, 2);
 
@@ -1341,7 +1352,7 @@
 
             selectedAnswerIndex = null;
             isRevealed = false;
-            hasShieldActive = false; // Reset shield mỗi câu mới
+            hasShieldActive = false;
             
             document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
             
@@ -1376,7 +1387,6 @@
 
                     document.getElementById('timer').innerText = timeLeft + 's';
 
-                    // Phát tiếng tít tít 3 giây cuối
                     if (timeLeft <= 3 && timeLeft > 0) {
                         playTickSound();
                     }
@@ -1562,12 +1572,15 @@
                         if (selectedAnswerIndex === correctIdx && myCorrectRank > 0) {
                             currentStreak++;
                             
+                            let totalCorrectNum = correctPlayers.length;
                             if (myCorrectRank === 1) {
                                 questionScoreEarned = 1000;
-                            } else if (myCorrectRank >= 100) {
-                                questionScoreEarned = 100;
+                            } else if (totalCorrectNum <= 1) {
+                                questionScoreEarned = 1000;
                             } else {
-                                questionScoreEarned = Math.round(1000 - (myCorrectRank - 1) * (900 / 99));
+                                let stepDecrement = 500 / (totalCorrectNum - 1);
+                                questionScoreEarned = Math.round(1000 - (myCorrectRank - 1) * stepDecrement);
+                                if (questionScoreEarned < 500) questionScoreEarned = 500;
                             }
 
                             if (currentStreak >= 10) {
@@ -1584,7 +1597,7 @@
 
                             db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
 
-                            let baseDamage = 500;
+                            let baseDamage = 350;
                             let activeCount = Math.max(1, totalActivePlayers);
                             let correctCountNum = Math.max(1, correctPlayers.length);
                             let scaledBossDamage = Math.round(baseDamage * (activeCount / correctCountNum));
@@ -1659,7 +1672,6 @@
                     document.getElementById('boss-hp-bar').style.width = percent + '%';
                     document.getElementById('boss-hp-text').innerText = `${Math.round(hp).toLocaleString()} / ${maxHp.toLocaleString()} HP`;
 
-                    // GIAI ĐOẠN ENRAGE MODE (MÁU DƯỚI 30%)
                     const dragonBox = document.getElementById('dragon-container-box');
                     const bossTitle = document.getElementById('boss-title-text');
                     if (percent <= 30 && percent > 0) {
@@ -1705,9 +1717,6 @@
                     let displayRankTier = Math.ceil(myExactRank / 10) * 10;
                     if (displayRankTier < 10) displayRankTier = 10;
 
-                    let topTierPlayers = sorted.slice(0, displayRankTier);
-                    let maxScoreInTier = topTierPlayers.length > 0 ? topTierPlayers[0].dps : myDps;
-
                     const row = document.createElement('div');
                     row.className = "bg-gray-900/60 p-3 rounded-xl border border-gray-800 text-center space-y-1";
                     row.innerHTML = `
@@ -1723,11 +1732,10 @@
             if (timerInterval) clearInterval(timerInterval);
             stopBGM();
             
-            // PHÂN BIỆT ÂM THANH CHIẾN THẮNG VÀ THẤT BẠI
             if (isVictory) {
                 playVictoryFanfare();
             } else {
-                playDefeatFanfare(); // Phát tiếng "té-o tèo tẻo tèo" khi thua
+                playDefeatFanfare();
             }
             
             const gameScreen = document.getElementById('game-screen');
@@ -1791,30 +1799,46 @@
                     }
                 });
 
+                let myRowElementToScroll = null;
+
                 if (sorted.length > 3) {
                     for (let i = 3; i < sorted.length; i++) {
                         const p = sorted[i];
+                        const isMe = (p.name === myName);
                         const row = document.createElement('div');
-                        row.className = "flex justify-between items-center bg-gray-900/60 px-4 py-2.5 rounded-xl border border-gray-800";
+                        
+                        // Áp dụng class phát sáng chuyên biệt nếu đây là dòng của người chơi hiện tại
+                        row.className = `flex justify-between items-center px-4 py-2.5 rounded-xl border transition-all duration-300 ${isMe ? 'my-highlight-row' : 'bg-gray-900/60 border-gray-800'}`;
+                        
                         row.innerHTML = `
                             <div class="flex items-center space-x-3">
-                                <span class="text-gray-400 font-bold">#${i + 1}</span>
-                                <span class="font-bold text-white">🛡️ ${p.name} ${p.name === myName ? '(Bạn)' : ''}</span>
+                                <span class="${isMe ? 'text-yellow-400 font-extrabold text-base' : 'text-gray-400 font-bold'}">#${i + 1}</span>
+                                <span class="font-bold ${isMe ? 'text-yellow-200 font-extrabold text-base underline' : 'text-white'}">🛡️ ${p.name} ${isMe ? '(Bạn)' : ''}</span>
                             </div>
                             <div class="flex items-center space-x-4">
-                                <span class="text-xs text-yellow-400 font-bold">${p.correct || 0}/15 câu đúng</span>
-                                <span class="font-bold text-green-400 game-font">${p.dps.toLocaleString()} điểm</span>
+                                <span class="text-xs ${isMe ? 'text-yellow-300 font-bold' : 'text-yellow-400'}">${p.correct || 0}/15 câu đúng</span>
+                                <span class="font-bold text-green-400 game-font ${isMe ? 'text-lg' : ''}">${p.dps.toLocaleString()} điểm</span>
                             </div>
                         `;
                         finalLb.appendChild(row);
+
+                        if (isMe) {
+                            myRowElementToScroll = row;
+                        }
                     }
                 } else {
                     finalLb.innerHTML = `<div class="text-center text-xs text-gray-400 py-2">Chưa có thêm chiến binh từ hạng 4 trở xuống.</div>`;
                 }
+
+                // Tự động kéo cuộn (Scroll) đến đúng vị trí hàng của người chơi sau khi hiển thị màn hình kết thúc
+                if (myRowElementToScroll) {
+                    setTimeout(() => {
+                        myRowElementToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 400);
+                }
             });
         }
 
-        // TÍNH NĂNG XUẤT FILE CSV DÀNH CHO GIÁO VIÊN / ADMIN
         function exportScoreCSV() {
             playClickSound();
             db.ref('room/players').once('value', (snapshot) => {
