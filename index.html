@@ -1564,6 +1564,7 @@
                             }
                         });
 
+                        // Sắp xếp theo thời gian trả lời nhanh nhất (ai bấm trước xếp trước)
                         correctPlayers.sort((a, b) => a.time - b.time);
 
                         let myCorrectRank = correctPlayers.findIndex(p => p.id === myPlayerId) + 1;
@@ -1572,15 +1573,20 @@
                         if (selectedAnswerIndex === correctIdx && myCorrectRank > 0) {
                             currentStreak++;
                             
-                            let totalCorrectNum = correctPlayers.length;
+                            // ĐIỀU CHỈNH ĐIỂM SỐ THEO YÊU CẦU MỚI:
+                            // - Người đầu tiên: 1000 điểm
+                            // - Giảm dần đến người thứ 100 còn 500 điểm
                             if (myCorrectRank === 1) {
                                 questionScoreEarned = 1000;
-                            } else if (totalCorrectNum <= 1) {
-                                questionScoreEarned = 1000;
                             } else {
-                                let stepDecrement = 500 / (totalCorrectNum - 1);
-                                questionScoreEarned = Math.round(1000 - (myCorrectRank - 1) * stepDecrement);
-                                if (questionScoreEarned < 500) questionScoreEarned = 500;
+                                let rankIndex = myCorrectRank - 1; // 0-based index
+                                // Từ hạng 2 đến 100: giảm đều từ 1000 xuống 500
+                                // Công thức tính giảm dần: 1000 - rankIndex * (500 / 99)
+                                let stepDecrement = 500 / 99;
+                                questionScoreEarned = Math.round(1000 - rankIndex * stepDecrement);
+                                if (questionScoreEarned < 500) {
+                                    questionScoreEarned = 500; // Từ người thứ 100 trở đi cố định 500 điểm
+                                }
                             }
 
                             if (currentStreak >= 10) {
@@ -1596,16 +1602,6 @@
                             document.getElementById('my-dps').innerText = myDps;
 
                             db.ref('room/players/' + myPlayerId).update({ dps: myDps, correct: myCorrectCount });
-
-                            let baseDamage = 350;
-                            let activeCount = Math.max(1, totalActivePlayers);
-                            let correctCountNum = Math.max(1, correctPlayers.length);
-                            let scaledBossDamage = Math.round(baseDamage * (activeCount / correctCountNum));
-
-                            db.ref('room/bossHP').transaction((currentHP) => {
-                                if (currentHP === null) return 0;
-                                return Math.max(0, currentHP - scaledBossDamage);
-                            });
 
                         } else {
                             if (!hasShieldActive) {
@@ -1632,7 +1628,20 @@
                 }
             }
 
+            // MÁU BOSS TỰ ĐỘNG TRỪ THEO % SAU MỖI CÂU (ĐẢM BẢO ĐỦ 15 CÂU MỚI KẾT THÚC)
             if (isAdmin) {
+                db.ref('room/bossMaxHP').once('value').then((maxHpSnap) => {
+                    let maxHp = maxHpSnap.val() || (totalActivePlayers * 7500);
+                    // Sau mỗi câu, máu boss giảm đúng tỷ lệ phần trăm sao cho đến câu thứ 15 (index 14) là cạn sạch 100%
+                    // Mỗi câu trừ tương đương khoảng 6.66% (100% / 15)
+                    let damagePerQuestion = Math.round(maxHp / 15);
+
+                    db.ref('room/bossHP').transaction((currentHP) => {
+                        if (currentHP === null) return maxHp;
+                        return Math.max(0, currentHP - damagePerQuestion);
+                    });
+                });
+
                 setTimeout(() => {
                     let nextIdx = currentQuestionIndex + 1;
                     if (nextIdx < questions.length) {
@@ -1756,13 +1765,13 @@
             }
 
             if (isVictory) {
-                document.getElementById('end-title').innerHTML = "CHIẾN THẮNG TRÙM!";
+                document.getElementById('end-title').innerHTML = "HOÀN THÀNH ĐẠI CHIẾN (ĐỦ 15 CÂU)!";
                 document.getElementById('end-title').className = "game-font text-3xl font-bold mb-2 text-green-400";
-                document.getElementById('end-subtitle').innerText = "Cộng đồng lớp đã hợp sức hạ gục Hỏa Long Vương thành công!";
+                document.getElementById('end-subtitle').innerText = "Trận chiến đã đi qua đủ 15 câu hỏi và Hỏa Long Vương đã bị hạ gục hoàn toàn!";
             } else {
-                document.getElementById('end-title').innerHTML = "BẠN ĐÃ THUA - THẤT BẠI!";
-                document.getElementById('end-title').className = "game-font text-3xl font-bold mb-2 text-red-500 animate-pulse";
-                document.getElementById('end-subtitle').innerText = "Hết 15 câu hỏi nhưng Hỏa Long Vương vẫn còn sống! Đội hình đã thất bại.";
+                document.getElementById('end-title').innerHTML = "KẾT THÚC TRẬN ĐẤU!";
+                document.getElementById('end-title').className = "game-font text-3xl font-bold mb-2 text-yellow-400";
+                document.getElementById('end-subtitle').innerText = "Đã hoàn thành toàn bộ 15 câu hỏi của đại chiến!";
             }
 
             db.ref('room/players').once('value', (snapshot) => {
@@ -1807,7 +1816,6 @@
                         const isMe = (p.name === myName);
                         const row = document.createElement('div');
                         
-                        // Áp dụng class phát sáng chuyên biệt nếu đây là dòng của người chơi hiện tại
                         row.className = `flex justify-between items-center px-4 py-2.5 rounded-xl border transition-all duration-300 ${isMe ? 'my-highlight-row' : 'bg-gray-900/60 border-gray-800'}`;
                         
                         row.innerHTML = `
@@ -1830,7 +1838,6 @@
                     finalLb.innerHTML = `<div class="text-center text-xs text-gray-400 py-2">Chưa có thêm chiến binh từ hạng 4 trở xuống.</div>`;
                 }
 
-                // Tự động kéo cuộn (Scroll) đến đúng vị trí hàng của người chơi sau khi hiển thị màn hình kết thúc
                 if (myRowElementToScroll) {
                     setTimeout(() => {
                         myRowElementToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
